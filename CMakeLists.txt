@@ -16,8 +16,6 @@ qt_add_qml_module(appGame01
     VERSION 1.0
     QML_FILES main.qml
     SOURCES Controller.h Controller.cpp
-    SOURCES Class2.h Class2.cpp
-    SOURCES Class1.h Class1.cpp
     QML_FILES bullet.qml
     SOURCES Bullet.h Bullet.cpp
 )

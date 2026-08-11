@@ -4,10 +4,10 @@
 #include <QLocale>
 #include <QTranslator>
 #include <QQmlContext>
-#include <Controller.h>
-#include <Class1.h>
-#include <Class2.h>
 #include <QObject>
+
+#include <Controller.h>
+
 
 int main(int argc, char *argv[])
 {
@@ -28,10 +28,6 @@ int main(int argc, char *argv[])
     Controller control; //obj
     engine.rootContext() -> setContextProperty("control", &control);
 
-    Class1 classOne;
-    Class2 classTwo;
-    QObject::connect(&classOne, &Class1::printIt, &classTwo, &Class2::print);
-    classOne.printIt();
 
 
     //access C++ class
