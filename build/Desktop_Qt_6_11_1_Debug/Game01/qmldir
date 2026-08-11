@@ -1,5 +1,0 @@
-module Game01
-typeinfo appGame01.qmltypes
-prefer :/Game01/
-depends QtQuick
-

@@ -1,2 +1,0 @@
-set(__QT_DEPLOY_TARGET_appGame01_FILE /home/anirudh/Game01/build/Desktop_Qt_6_11_1_Debug/appGame01)
-set(__QT_DEPLOY_TARGET_appGame01_TYPE EXECUTABLE)

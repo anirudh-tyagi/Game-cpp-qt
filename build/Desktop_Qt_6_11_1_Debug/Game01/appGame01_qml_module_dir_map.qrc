@@ -1,6 +1,0 @@
-<RCC>
-  <qresource prefix="/">
-    <file alias="/Game01">/home/anirudh/Game01/build/Desktop_Qt_6_11_1_Debug/Game01</file>
-
-  </qresource>
-</RCC>
