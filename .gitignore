@@ -1,17 +1,33 @@
-# Build directories
+# Qt / CMake build directories
 build/
 cmake-build-*/
 out/
 
+# Qt Creator
+.qtcreator/
+*.user
+*.user.*
+*.pro.user
+*.pro.user.*
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+compile_commands.json
+CTestTestfile.cmake
+
 # Qt generated files
+*.qm
 *.qmlc
 *.jsc
 .qmake.stash
 
-# IDE
-.idea/
+# IDEs
 .vscode/
+.idea/
 
-# OS
+# OS files
 .DS_Store
 Thumbs.db
