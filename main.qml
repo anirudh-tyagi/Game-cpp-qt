@@ -1,10 +1,18 @@
 import QtQuick
 
 Window {
-    width: 640
-    height: 480
+    width: Screen.width
+    height: Screen.height
     visible: true
     title: qsTr("Hello World")
+    Component.onCompleted: {
+            control.setBoundaries(width, height)
+        }
+
+        onWidthChanged:control.setBoundaries(width, height)
+
+
+        onHeightChanged:control.setBoundaries(width, height)
 
     Rectangle{
         id : move1
@@ -26,12 +34,10 @@ Window {
                             }
                             if(event.key === Qt.Key_Up)
                             {
-                                move1.y -= 10;
+                                control.applyThrust()
                             }
-                            if(event.key === Qt.Key_Down)
-                            {
-                                move1.y += 10;
-                            }
+
+
                         }
     }
  }

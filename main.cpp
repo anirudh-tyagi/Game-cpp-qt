@@ -5,6 +5,10 @@
 #include <QTranslator>
 #include <QQmlContext>
 #include <Controller.h>
+#include <Class1.h>
+#include <Class2.h>
+#include <QObject>
+
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
@@ -22,7 +26,15 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
 
     Controller control; //obj
-    engine.rootContext() -> setContextProperty("control", &control); //access C++ class
+    engine.rootContext() -> setContextProperty("control", &control);
+
+    Class1 classOne;
+    Class2 classTwo;
+    QObject::connect(&classOne, &Class1::printIt, &classTwo, &Class2::print);
+    classOne.printIt();
+
+
+    //access C++ class
     const QUrl url(QStringLiteral("qrc:/Game01/main.qml"));
     QObject::connect(
         &engine,
