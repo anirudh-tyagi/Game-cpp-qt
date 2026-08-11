@@ -1,0 +1,17 @@
+# Build directories
+build/
+cmake-build-*/
+out/
+
+# Qt generated files
+*.qmlc
+*.jsc
+.qmake.stash
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
