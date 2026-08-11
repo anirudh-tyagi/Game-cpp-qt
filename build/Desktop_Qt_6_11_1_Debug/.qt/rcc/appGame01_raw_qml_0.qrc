@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/Game01/">
+    <file alias="main.qml">/home/anirudh/Game01/main.qml</file>
+  </qresource>
+</RCC>
+

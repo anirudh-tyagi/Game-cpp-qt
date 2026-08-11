@@ -1,0 +1,223 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-68ec0ec49a64892d5624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15,
+						16,
+						17,
+						18
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "Game01",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15,
+						16,
+						17,
+						18
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "all_aotstats::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-all_aotstats-Debug-a3402ee2455f01fc6f66.json",
+					"name" : "all_aotstats",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "all_qmllint::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-all_qmllint-Debug-215419fba6ee4a07c366.json",
+					"name" : "all_qmllint",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "all_qmllint_json::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-all_qmllint_json-Debug-4019e7517148c42ee2a9.json",
+					"name" : "all_qmllint_json",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "all_qmllint_module::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-all_qmllint_module-Debug-a3d6346453b2784e2a96.json",
+					"name" : "all_qmllint_module",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "all_qmltyperegistrations::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-all_qmltyperegistrations-Debug-b30089bb37faf562d2ed.json",
+					"name" : "all_qmltyperegistrations",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "appGame01::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-appGame01-Debug-ff938779741df175617c.json",
+					"name" : "appGame01",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "appGame01_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-appGame01_autogen-Debug-7c9db34a5dfd5ffb80d1.json",
+					"name" : "appGame01_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "appGame01_autogen_timestamp_deps::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-appGame01_autogen_timestamp_deps-Debug-099fc26f0bb6fa70afe0.json",
+					"name" : "appGame01_autogen_timestamp_deps",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "appGame01_copy_qml::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-appGame01_copy_qml-Debug-1bc5c5faefd1c58d3e38.json",
+					"name" : "appGame01_copy_qml",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "appGame01_copy_res::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-appGame01_copy_res-Debug-228b1f2d129b9aa7cac2.json",
+					"name" : "appGame01_copy_res",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "appGame01_qmlimportscan::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-appGame01_qmlimportscan-Debug-34dec605fe7ee969b459.json",
+					"name" : "appGame01_qmlimportscan",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "appGame01_qmllint::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-appGame01_qmllint-Debug-e127d1397a8ef315ba47.json",
+					"name" : "appGame01_qmllint",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "appGame01_qmllint_json::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-appGame01_qmllint_json-Debug-d901179bc388d8f5f9ba.json",
+					"name" : "appGame01_qmllint_json",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "appGame01_qmllint_module::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-appGame01_qmllint_module-Debug-aff9aacfcce4d9aface5.json",
+					"name" : "appGame01_qmllint_module",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "appGame01_qmltyperegistration::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-appGame01_qmltyperegistration-Debug-56aac76507b2a48d62d8.json",
+					"name" : "appGame01_qmltyperegistration",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "clean_qml_context_properties::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-clean_qml_context_properties-Debug-0622062614c288a71633.json",
+					"name" : "clean_qml_context_properties",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "dump_qml_context_properties::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-dump_qml_context_properties-Debug-3b1d47dd104d355e8829.json",
+					"name" : "dump_qml_context_properties",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "generate_qmlls_build_ini_file::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-generate_qmlls_build_ini_file-Debug-9c8ee0e83748cb6b5daa.json",
+					"name" : "generate_qmlls_build_ini_file",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "module_appGame01_aotstats_target::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-module_appGame01_aotstats_target-Debug-ae0775633b0227dc68ad.json",
+					"name" : "module_appGame01_aotstats_target",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/anirudh/Game01/build/Desktop_Qt_6_11_1_Debug",
+		"source" : "/home/anirudh/Game01"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}

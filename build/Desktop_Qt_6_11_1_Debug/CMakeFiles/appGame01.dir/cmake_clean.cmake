@@ -1,0 +1,41 @@
+file(REMOVE_RECURSE
+  ".qt/rcc/qrc_appGame01_raw_qml_0.cpp"
+  ".qt/rcc/qrc_qmake_Game01.cpp"
+  ".rcc/qmlcache/appGame01_main_qml.cpp"
+  ".rcc/qmlcache/appGame01_main_qml.cpp.aotstats"
+  ".rcc/qmlcache/appGame01_qmlcache_loader.cpp"
+  "CMakeFiles/appGame01_autogen.dir/AutogenUsed.txt"
+  "CMakeFiles/appGame01_autogen.dir/ParseCache.txt"
+  "appGame01_autogen"
+  "CMakeFiles/appGame01.dir/Controller.cpp.o"
+  "CMakeFiles/appGame01.dir/Controller.cpp.o.d"
+  "CMakeFiles/appGame01.dir/appGame01_autogen/mocs_compilation.cpp.o"
+  "CMakeFiles/appGame01.dir/appGame01_autogen/mocs_compilation.cpp.o.d"
+  "CMakeFiles/appGame01.dir/appgame01_qmltyperegistrations.cpp.o"
+  "CMakeFiles/appGame01.dir/appgame01_qmltyperegistrations.cpp.o.d"
+  "CMakeFiles/appGame01.dir/build/Desktop_Qt_6_11_1_Debug/.qt/rcc/qrc_appGame01_raw_qml_0.cpp.o"
+  "CMakeFiles/appGame01.dir/build/Desktop_Qt_6_11_1_Debug/.qt/rcc/qrc_appGame01_raw_qml_0.cpp.o.d"
+  "CMakeFiles/appGame01.dir/build/Desktop_Qt_6_11_1_Debug/.qt/rcc/qrc_qmake_Game01.cpp.o"
+  "CMakeFiles/appGame01.dir/build/Desktop_Qt_6_11_1_Debug/.qt/rcc/qrc_qmake_Game01.cpp.o.d"
+  "CMakeFiles/appGame01.dir/build/Desktop_Qt_6_11_1_Debug/.rcc/qmlcache/appGame01_main_qml.cpp.o"
+  "CMakeFiles/appGame01.dir/build/Desktop_Qt_6_11_1_Debug/.rcc/qmlcache/appGame01_main_qml.cpp.o.d"
+  "CMakeFiles/appGame01.dir/build/Desktop_Qt_6_11_1_Debug/.rcc/qmlcache/appGame01_qmlcache_loader.cpp.o"
+  "CMakeFiles/appGame01.dir/build/Desktop_Qt_6_11_1_Debug/.rcc/qmlcache/appGame01_qmlcache_loader.cpp.o.d"
+  "CMakeFiles/appGame01.dir/main.cpp.o"
+  "CMakeFiles/appGame01.dir/main.cpp.o.d"
+  "Game01/appGame01.qmltypes"
+  "appGame01"
+  "appGame01.pdb"
+  "appGame01_autogen/mocs_compilation.cpp"
+  "appGame01_autogen/timestamp"
+  "appgame01_qmltyperegistrations.cpp"
+  "meta_types/appGame01_json_file_list.txt"
+  "meta_types/appGame01_json_file_list.txt.timestamp"
+  "meta_types/qt6appgame01_metatypes.json"
+  "meta_types/qt6appgame01_metatypes.json.gen"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/appGame01.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()
