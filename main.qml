@@ -11,18 +11,18 @@ Window {
         width: 50
         height: 50
         color: "red"
-        x: 100
-        y: 100
+        x: control.x //50
+        y: control.y //50
         focus: true
         Keys.onPressed: (event) =>
                         {
                             if(event.key === Qt.Key_Left)
                             {
-                                move1.x -= 10;
+                                control.moveLeft()
                             }
                             if(event.key === Qt.Key_Right)
                             {
-                                move1.x += 10;
+                                control.moveRight()
                             }
                             if(event.key === Qt.Key_Up)
                             {

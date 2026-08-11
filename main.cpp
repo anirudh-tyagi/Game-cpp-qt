@@ -3,7 +3,8 @@
 
 #include <QLocale>
 #include <QTranslator>
-
+#include <QQmlContext>
+#include <Controller.h>
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
@@ -19,6 +20,9 @@ int main(int argc, char *argv[])
     }
 
     QQmlApplicationEngine engine;
+
+    Controller control; //obj
+    engine.rootContext() -> setContextProperty("control", &control); //access C++ class
     const QUrl url(QStringLiteral("qrc:/Game01/main.qml"));
     QObject::connect(
         &engine,
