@@ -3,6 +3,9 @@
 
 #include <QObject>
 #include <QTimer>
+
+#include <Bullet.h>
+#include <vector>
 class Controller: public QObject
 {
     Q_OBJECT
@@ -12,12 +15,8 @@ class Controller: public QObject
 public:
     Controller(QObject* parent = nullptr);
     Q_INVOKABLE void setBoundaries(double width, double height);
-    double x(){
-        return m_x;
-    }
-    double y(){
-        return m_y;
-    }
+    double x(){return m_x;}
+    double y(){return m_y;}
 
     void setX(double value){
         if(m_x != value){
@@ -31,29 +30,13 @@ public:
             emit yChanged();
         }
     }
-    Q_INVOKABLE void moveLeft(){
-        setX(qMax(minX, m_x - xSpeed));
-    }
+    Q_INVOKABLE void moveLeft();
+    Q_INVOKABLE void moveRight();
+    Q_INVOKABLE void applyThrust();
 
-    Q_INVOKABLE void moveRight(){
-        setX(qMin(maxX, m_x + xSpeed));
-    }
-    Q_INVOKABLE void applyThrust(){
-        ySpeed= maxThrust;
-        if(m_y < bottomY/1.5){
-            ySpeed = 0;
-        }
-    }
+    Q_INVOKABLE void fireBullet();
 public slots:
-    void updateState(){
-        m_y += ySpeed;
-        ySpeed += gravity;
-
-        if(m_y > bottomY){
-            m_y = bottomY;
-        }
-        emit yChanged();
-    }
+    void updateState();
 signals:
     void xChanged();
     void yChanged();

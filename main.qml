@@ -36,8 +36,10 @@ Window {
                             {
                                 control.applyThrust()
                             }
-
-
+                            if(event.key === Qt.Key_Space)
+                            {
+                                control.fireBullet();
+                            }
                         }
     }
  }

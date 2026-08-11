@@ -18,6 +18,8 @@ qt_add_qml_module(appGame01
     SOURCES Controller.h Controller.cpp
     SOURCES Class2.h Class2.cpp
     SOURCES Class1.h Class1.cpp
+    QML_FILES bullet.qml
+    SOURCES Bullet.h Bullet.cpp
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
