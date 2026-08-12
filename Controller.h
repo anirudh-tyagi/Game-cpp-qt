@@ -3,14 +3,19 @@
 
 #include <QObject>
 #include <QTimer>
+#include <QQmlListProperty>
 
 #include <Bullet.h>
+#include <Enemy.h>
+
 #include <vector>
 class Controller: public QObject
 {
     Q_OBJECT
     Q_PROPERTY(double x READ x WRITE setX NOTIFY xChanged)
     Q_PROPERTY(double y READ y WRITE setY NOTIFY yChanged)
+    Q_PROPERTY(QQmlListProperty<Bullet> bullets READ bullets NOTIFY bulletChanged)
+    Q_PROPERTY(QQmlListProperty<Enemy> enemies READ enemies NOTIFY enemyChanged)
 
 public:
     Controller(QObject* parent = nullptr);
@@ -35,11 +40,23 @@ public:
     Q_INVOKABLE void applyThrust();
 
     Q_INVOKABLE void fireBullet();
+    Q_INVOKABLE void createEnemies();
+    //this helps us exopse our C++ obj or class to qmls
+    QQmlListProperty <Bullet> bullets()
+    {
+        return QQmlListProperty(this, &bulletList);
+    }
+    QQmlListProperty <Enemy> enemies()
+    {
+        return QQmlListProperty(this, &enemyList);
+    }
 public slots:
     void updateState();
 signals:
     void xChanged();
     void yChanged();
+    void bulletChanged();
+    void enemyChanged();
 
 private:
     double m_x; //current position of rect on x direction
@@ -52,6 +69,8 @@ private:
     double maxThrust = -15;
     double gravity = 0.5;
     QTimer time;
+    QList<Bullet*> bulletList;
+    QList<Enemy*> enemyList;
 };
 
 #endif // CONTROLLER_H

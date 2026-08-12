@@ -47,10 +47,21 @@ void Controller::applyThrust(){
 Q_INVOKABLE void Controller::fireBullet()
 {
     Bullet* newBullet = new Bullet();
-    std::vector<Bullet*> bulletList;
-    bulletList.push_back(newBullet);
-    qInfo()<<"Fired bullet";
+    newBullet->setX(m_x + 25);
+    newBullet->setY(m_y);
+    bulletList.append(newBullet);
+    emit bulletChanged();
 }
+
+Q_INVOKABLE void Controller::createEnemies()
+{
+    Enemy* newEnemy = new Enemy();
+    newEnemy->setX(rand() % 1512);
+    newEnemy->setY(0);
+    enemyList.append(newEnemy);
+    emit enemyChanged();
+}
+
 //slot
 void Controller::updateState(){
     m_y += ySpeed;

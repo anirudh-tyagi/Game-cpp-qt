@@ -40,6 +40,19 @@ Window {
                             {
                                 control.fireBullet();
                             }
+                            if(event.key === Qt.Key_Shift)
+                            {
+                                control.createEnemies();
+                            }
                         }
     }
+    Repeater {
+        model: control.bullets
+        delegate: Bullet {}
+    }
+    Repeater {
+        model: control.enemies
+        delegate: Enemy {}
+    }
+
  }
