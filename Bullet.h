@@ -3,6 +3,9 @@
 
 #include <QObject>
 #include <QTimer>
+
+class Controller;
+
 class Bullet: public QObject
 {
     Q_OBJECT
@@ -11,7 +14,7 @@ class Bullet: public QObject
 public:
 
 
-    Bullet(QObject* parent = nullptr);
+    Bullet(Controller* controller, QObject* parent = nullptr);
     double x(){return m_x;}
     double y(){return m_y;}
 
@@ -32,6 +35,7 @@ public slots:
 signals:
     void xChanged();
     void yChanged();
+    void bulletDestroyed(Bullet* bullet);
 private:
     double m_x;
     double m_y;

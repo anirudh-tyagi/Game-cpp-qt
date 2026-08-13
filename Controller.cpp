@@ -1,5 +1,6 @@
 #include "Controller.h"
 #include <qdebug.h>
+#include <QRandomGenerator>
 
 Controller::Controller(QObject* parent)
     : QObject(parent),
@@ -13,6 +14,9 @@ Controller::Controller(QObject* parent)
 {
     connect(&time, &QTimer::timeout, this, &Controller::updateState);
     time.start(16); //60fps
+
+    connect(&startE, &QTimer::timeout, this, &Controller::createEnemies);
+    startE.start(1000 + QRandomGenerator::global()->bounded(20000));//1-3 seconds
 }
 
 void Controller::setBoundaries(double width, double height)
@@ -46,7 +50,7 @@ void Controller::applyThrust(){
 
 Q_INVOKABLE void Controller::fireBullet()
 {
-    Bullet* newBullet = new Bullet();
+    Bullet* newBullet = new Bullet(this, this);
     newBullet->setX(m_x + 25);
     newBullet->setY(m_y);
     bulletList.append(newBullet);
@@ -56,9 +60,11 @@ Q_INVOKABLE void Controller::fireBullet()
 Q_INVOKABLE void Controller::createEnemies()
 {
     Enemy* newEnemy = new Enemy();
-    newEnemy->setX(rand() % 1512);
-    newEnemy->setY(0);
+    newEnemy->setX(QRandomGenerator::global()->bounded(1512));
+    newEnemy->setY(-50);
     enemyList.append(newEnemy);
+    startE.start(1000 + QRandomGenerator::global()->bounded(2000));
+
     emit enemyChanged();
 }
 
@@ -71,4 +77,18 @@ void Controller::updateState(){
         m_y = bottomY;
     }
     emit yChanged();
+}
+
+void Controller::deleteBullet(Bullet *bullet)
+{
+    int index= bulletList.indexOf(bullet);
+    if (index != -1)
+    {
+        delete bulletList[index];
+        //deletes the memory
+        bulletList.removeAt(index);
+        //deletes the place inside list of the instance
+        emit bulletChanged();
+        qInfo()<<"Bullet Destroyed";
+    }
 }

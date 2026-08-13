@@ -40,10 +40,6 @@ Window {
                             {
                                 control.fireBullet();
                             }
-                            if(event.key === Qt.Key_Shift)
-                            {
-                                control.createEnemies();
-                            }
                         }
     }
     Repeater {

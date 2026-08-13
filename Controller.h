@@ -52,11 +52,14 @@ public:
     }
 public slots:
     void updateState();
+    void deleteBullet(Bullet* bullet);
+
 signals:
     void xChanged();
     void yChanged();
     void bulletChanged();
     void enemyChanged();
+    void bulletDestroyed();
 
 private:
     double m_x; //current position of rect on x direction
@@ -69,6 +72,7 @@ private:
     double maxThrust = -15;
     double gravity = 0.5;
     QTimer time;
+    QTimer startE;
     QList<Bullet*> bulletList;
     QList<Enemy*> enemyList;
 };
