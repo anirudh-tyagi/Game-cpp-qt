@@ -16,6 +16,8 @@ class Controller: public QObject
     Q_PROPERTY(double y READ y WRITE setY NOTIFY yChanged)
     Q_PROPERTY(QQmlListProperty<Bullet> bullets READ bullets NOTIFY bulletChanged)
     Q_PROPERTY(QQmlListProperty<Enemy> enemies READ enemies NOTIFY enemyChanged)
+    Q_PROPERTY(double score READ score WRITE setScore NOTIFY scoreChanged)
+    Q_PROPERTY(bool gameOver READ gameOver NOTIFY gameOverChanged)
 
 public:
     Controller(QObject* parent = nullptr);
@@ -35,12 +37,17 @@ public:
             emit yChanged();
         }
     }
+    void setScore(double value){if(m_score != value){m_score=value; emit scoreChanged();}}
+    double score(){return m_score;}
+    bool gameOver() const {return m_gameOver;}
     Q_INVOKABLE void moveLeft();
     Q_INVOKABLE void moveRight();
     Q_INVOKABLE void applyThrust();
 
     Q_INVOKABLE void fireBullet();
     Q_INVOKABLE void createEnemies();
+
+    Q_INVOKABLE QString showScore();
     //this helps us exopse our C++ obj or class to qmls
     QQmlListProperty <Bullet> bullets()
     {
@@ -63,9 +70,14 @@ signals:
     void bulletChanged();
     void enemyChanged();
     void bulletDestroyed();
+    void scoreChanged();
+    void gameOverChanged();
 
 private:
     double despawnY() const; //y below which an enemy is fully off screen
+    bool enemyReachedBottom(); //true once any enemy touches the bottom edge
+    bool enemyHitPlayer(); //true once any enemy box overlaps the player box
+    void endGame(); //freeze everything and flag the game as over
     double m_x; //current position of rect on x direction
     double m_y; //current position of rect on y dirsction
     double xSpeed;
@@ -81,6 +93,8 @@ private:
     QList<Enemy*> enemyList;
     int moveDirection;
     QTimer move;
+    double m_score = 0;
+    bool m_gameOver = false;
 };
 
 #endif // CONTROLLER_H

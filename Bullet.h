@@ -18,6 +18,9 @@ public:
     double x(){return m_x;}
     double y(){return m_y;}
 
+    //stop moving but stay on screen, used when the game ends
+    void freeze(){bTime.stop();}
+
     void setX(double value){
         if(m_x != value){
             m_x = value;

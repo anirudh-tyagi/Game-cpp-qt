@@ -13,6 +13,7 @@ constexpr double cellSize = 64.0;
 constexpr double bulletWidth = 10.0;
 constexpr double bulletHeight = 30.0;
 constexpr double enemySize = 50.0;
+constexpr double playerSize = 50.0;
 
 int cellIndex(double value){
     return static_cast<int>(std::floor(value / cellSize));
@@ -69,8 +70,73 @@ void Controller::setBoundaries(double width, double height)
     emit yChanged();
 }
 
+bool Controller::enemyReachedBottom()
+{
+    //an enemy box runs from y to y + enemySize, and the window bottom sits at
+    //bottomY + enemySize, so touching down means y has caught up with bottomY
+    for(Enemy* enemy : std::as_const(enemyList)){
+        if(enemy->y() >= bottomY){
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Controller::enemyHitPlayer()
+{
+    //only one player box, so a plain sweep beats building a grid for it
+    const double playerLeft = m_x;
+    const double playerRight = playerLeft + playerSize;
+    const double playerTop = m_y;
+    const double playerBottom = playerTop + playerSize;
+
+    for(Enemy* enemy : std::as_const(enemyList))
+    {
+        const double enemyLeft = enemy->x();
+        const double enemyRight = enemyLeft + enemySize;
+        const double enemyTop = enemy->y();
+        const double enemyBottom = enemyTop + enemySize;
+
+        if(playerRight > enemyLeft && playerLeft < enemyRight
+            && playerTop < enemyBottom && playerBottom > enemyTop)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void Controller::endGame()
+{
+    if(m_gameOver){
+        return;
+    }
+
+    m_gameOver = true;
+
+    //every entity drives itself off its own timer, so freeze them all and the
+    //last frame stays on screen instead of the world carrying on underneath
+    time.stop();
+    move.stop();
+    startE.stop();
+    moveDirection = 0;
+
+    for(Enemy* enemy : std::as_const(enemyList)){
+        enemy->freeze();
+    }
+    for(Bullet* bullet : std::as_const(bulletList)){
+        bullet->freeze();
+    }
+
+    emit gameOverChanged();
+}
+
 void Controller::moveLeft()
 {
+    if(m_gameOver){
+        return;
+    }
+
     moveDirection = -1;
     updateMovement(); //respond to the very first press without waiting a tick
     if (!move.isActive())
@@ -80,6 +146,10 @@ void Controller::moveLeft()
 }
 
 void Controller::moveRight(){
+    if(m_gameOver){
+        return;
+    }
+
     moveDirection = 1;
     updateMovement();
     if (!move.isActive())
@@ -95,6 +165,10 @@ void Controller::stopMovement()
 }
 
 void Controller::applyThrust(){
+    if(m_gameOver){
+        return;
+    }
+
     ySpeed= maxThrust;
     if(m_y < bottomY/1.5){
         ySpeed = 0;
@@ -103,6 +177,10 @@ void Controller::applyThrust(){
 
 Q_INVOKABLE void Controller::fireBullet()
 {
+    if(m_gameOver){
+        return;
+    }
+
     Bullet* newBullet = new Bullet(this, this);
     newBullet->setX(m_x + 25);
     newBullet->setY(m_y);
@@ -112,6 +190,10 @@ Q_INVOKABLE void Controller::fireBullet()
 
 Q_INVOKABLE void Controller::createEnemies()
 {
+    if(m_gameOver){
+        return;
+    }
+
     startE.start(1000 + QRandomGenerator::global()->bounded(2000));
 
     //nothing to spawn into until QML has handed us the window size
@@ -128,6 +210,11 @@ Q_INVOKABLE void Controller::createEnemies()
     emit enemyChanged();
 }
 
+QString Controller::showScore()
+{
+    return QString::number(score());
+}
+
 //slot
 void Controller::updateState(){
     m_y += ySpeed;
@@ -138,6 +225,12 @@ void Controller::updateState(){
     }
     checkCollision();
     emit yChanged();
+
+    //checked after the collision pass so an enemy shot on its last frame
+    //still counts as killed rather than as a landing or a crash
+    if(enemyReachedBottom() || enemyHitPlayer()){
+        endGame();
+    }
 }
 
 void Controller::deleteBullet(Bullet *bullet)
@@ -145,11 +238,16 @@ void Controller::deleteBullet(Bullet *bullet)
     int index= bulletList.indexOf(bullet);
     if (index != -1)
     {
-        delete bulletList[index];
-        //deletes the memory
+        //out of the list first, so QML never re-reads the model while a
+        //pointer to a dying bullet is still in it
         bulletList.removeAt(index);
-        //deletes the place inside list of the instance
         emit bulletChanged();
+
+        //this normally runs from the bullet's own timeout, so a plain delete
+        //would free the object underneath its own call stack, stop its timer
+        //so it cannot ask to be deleted again while the event loop catches up
+        bullet->freeze();
+        bullet->deleteLater();
         //qInfo()<<"Bullet Destroyed";
     }
 }
@@ -160,11 +258,12 @@ void Controller::deleteEnemy(Enemy *enemy)
     int index= enemyList.indexOf(enemy);
     if (index != -1)
     {
-        delete enemyList[index];
-        //deletes the memory
+        //same ordering as deleteBullet, list first then the object
         enemyList.removeAt(index);
-        //deletes the place inside list of the instance
         emit enemyChanged();
+
+        enemy->freeze();
+        enemy->deleteLater();
         //qInfo()<<"Enemy Destroyed";
     }
 }
@@ -248,6 +347,8 @@ void Controller::checkCollision()
             destroyed.insert(hit);
             deleteBullet(bullet);
             deleteEnemy(hit);
+            setScore(score() +10);
+            emit scoreChanged();
         }
     }
 }

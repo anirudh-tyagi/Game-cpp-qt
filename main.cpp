@@ -23,9 +23,11 @@ int main(int argc, char *argv[])
         }
     }
 
-    QQmlApplicationEngine engine;
-
+    //declared before the engine on purpose, locals die in reverse order so the
+    //engine tears down its QML (and every binding onto "control") first
     Controller control; //obj
+
+    QQmlApplicationEngine engine;
     engine.rootContext() -> setContextProperty("control", &control);
 
 

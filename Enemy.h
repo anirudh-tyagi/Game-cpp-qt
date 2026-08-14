@@ -21,6 +21,9 @@ public:
     //y past which the enemy has left the screen and cleans itself up
     void setDespawnY(double value){m_despawnY = value;}
 
+    //stop moving but stay on screen, used when the game ends
+    void freeze(){eTime.stop();}
+
     void setX(double value){
         if(m_x != value){
             m_x = value;

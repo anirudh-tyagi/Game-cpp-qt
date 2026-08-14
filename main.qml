@@ -49,6 +49,29 @@ Window {
                              }
                          }
     }
+    Text{
+        id: scoreBoard
+        text: "Score:"+ control.showScore()
+        x:50
+        y:50
+
+        Connections
+        {
+            target: control
+            function onScoreChanged()
+            {
+                scoreBoard.text = "Score:" + control.showScore();
+            }
+        }
+    }
+    Text{
+        id: gameOverText
+        text: "GAME OVER"
+        visible: control.gameOver
+        color: "red"
+        font.pixelSize: 64
+        anchors.centerIn: parent
+    }
     Repeater {
         model: control.bullets
         delegate: Bullet {}
