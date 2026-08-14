@@ -1,42 +1,23 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.21)
 
-project(Game01 VERSION 0.1 LANGUAGES CXX)
+project(Game01 VERSION 0.1.0 LANGUAGES CXX)
 
-set(CMAKE_AUTOMOC ON)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.2 COMPONENTS Quick REQUIRED)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Quick LinguistTools)
 
-qt_add_executable(appGame01
-    main.cpp
-)
+qt_standard_project_setup(REQUIRES 6.5)
 
-qt_add_qml_module(appGame01
-    URI Game01
-    VERSION 1.0
-    QML_FILES main.qml
-    SOURCES Controller.h Controller.cpp
-    QML_FILES Bullet.qml
-    SOURCES Bullet.h Bullet.cpp
-    SOURCES Enemy.h Enemy.cpp
-    QML_FILES Enemy.qml
-)
-
-# Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
-# If you are developing for iOS or macOS you should consider setting an
-# explicit, fixed bundle identifier manually though.
-set_target_properties(appGame01 PROPERTIES
-#    MACOSX_BUNDLE_GUI_IDENTIFIER com.example.appGame01
-    MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
-    MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
-    MACOSX_BUNDLE TRUE
-    WIN32_EXECUTABLE TRUE
-)
-
-target_link_libraries(appGame01
-    PRIVATE Qt6::Quick)
+# game_core   simulation: game loop, physics, entities. No UI.
+# game_ui     the "Game01" QML module, every .qml file lives here
+# appGame01   thin executable that wires the two together
+add_subdirectory(src/core)
+add_subdirectory(src/ui)
+add_subdirectory(src/app)
 
 include(GNUInstallDirs)
 install(TARGETS appGame01
     BUNDLE DESTINATION .
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})

@@ -1,13 +1,10 @@
 #include <QGuiApplication>
-#include <QQmlApplicationEngine>
-
 #include <QLocale>
-#include <QTranslator>
+#include <QQmlApplicationEngine>
 #include <QQmlContext>
-#include <QObject>
+#include <QTranslator>
 
-#include <Controller.h>
-
+#include "core/Controller.h"
 
 int main(int argc, char *argv[])
 {
@@ -25,25 +22,20 @@ int main(int argc, char *argv[])
 
     //declared before the engine on purpose, locals die in reverse order so the
     //engine tears down its QML (and every binding onto "control") first
-    Controller control; //obj
+    Controller control;
 
     QQmlApplicationEngine engine;
-    engine.rootContext() -> setContextProperty("control", &control);
 
+    //the single bridge between the simulation and the view layer
+    engine.rootContext()->setContextProperty("control", &control);
 
-
-    //access C++ class
-    const QUrl url(QStringLiteral("qrc:/Game01/main.qml"));
     QObject::connect(
         &engine,
-        &QQmlApplicationEngine::objectCreated,
+        &QQmlApplicationEngine::objectCreationFailed,
         &app,
-        [url](QObject *obj, const QUrl &objUrl) {
-            if (!obj && url == objUrl)
-                QCoreApplication::exit(-1);
-        },
+        []() { QCoreApplication::exit(-1); },
         Qt::QueuedConnection);
-    engine.load(url);
+    engine.loadFromModule("Game01", "Main");
 
-    return QGuiApplication::exec();
+    return app.exec();
 }

@@ -12,8 +12,6 @@ class Bullet: public QObject
     Q_PROPERTY(double x READ x WRITE setX NOTIFY xChanged)
     Q_PROPERTY(double y READ y WRITE setY NOTIFY yChanged)
 public:
-
-
     Bullet(Controller* controller, QObject* parent = nullptr);
     double x(){return m_x;}
     double y(){return m_y;}

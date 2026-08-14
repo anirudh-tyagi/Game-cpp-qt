@@ -2,13 +2,12 @@
 #define CONTROLLER_H
 
 #include <QObject>
-#include <QTimer>
 #include <QQmlListProperty>
+#include <QTimer>
 
-#include <Bullet.h>
-#include <Enemy.h>
+#include "core/Bullet.h"
+#include "core/Enemy.h"
 
-#include <vector>
 class Controller: public QObject
 {
     Q_OBJECT
@@ -21,7 +20,7 @@ class Controller: public QObject
 
 public:
     Controller(QObject* parent = nullptr);
-    Q_INVOKABLE void setBoundaries(double width, double height);
+
     double x(){return m_x;}
     double y(){return m_y;}
 
@@ -40,15 +39,8 @@ public:
     void setScore(double value){if(m_score != value){m_score=value; emit scoreChanged();}}
     double score(){return m_score;}
     bool gameOver() const {return m_gameOver;}
-    Q_INVOKABLE void moveLeft();
-    Q_INVOKABLE void moveRight();
-    Q_INVOKABLE void applyThrust();
 
-    Q_INVOKABLE void fireBullet();
-    Q_INVOKABLE void createEnemies();
-
-    Q_INVOKABLE QString showScore();
-    //this helps us exopse our C++ obj or class to qmls
+    //this helps us expose our C++ obj or class to qmls
     QQmlListProperty <Bullet> bullets()
     {
         return QQmlListProperty(this, &bulletList);
@@ -57,13 +49,23 @@ public:
     {
         return QQmlListProperty(this, &enemyList);
     }
+
+    //called from QML
+    Q_INVOKABLE void setBoundaries(double width, double height);
+    Q_INVOKABLE void moveLeft();
+    Q_INVOKABLE void moveRight();
     Q_INVOKABLE void stopMovement();
+    Q_INVOKABLE void applyThrust();
+    Q_INVOKABLE void fireBullet();
+    Q_INVOKABLE void createEnemies();
+
 public slots:
     void updateState();
     void deleteBullet(Bullet* bullet);
     void deleteEnemy(Enemy *enemy);
     void checkCollision();
     void updateMovement();
+
 signals:
     void xChanged();
     void yChanged();
@@ -78,6 +80,7 @@ private:
     bool enemyReachedBottom(); //true once any enemy touches the bottom edge
     bool enemyHitPlayer(); //true once any enemy box overlaps the player box
     void endGame(); //freeze everything and flag the game as over
+
     double m_x; //current position of rect on x direction
     double m_y; //current position of rect on y dirsction
     double xSpeed;
@@ -85,8 +88,6 @@ private:
     double minX;
     double maxX;
     double bottomY;
-    double maxThrust = -15;
-    double gravity = 0.5;
     QTimer time;
     QTimer startE;
     QList<Bullet*> bulletList;

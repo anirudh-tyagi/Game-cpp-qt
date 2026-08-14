@@ -1,15 +1,17 @@
-#include "Enemy.h"
-#include <Controller.h>
+#include "core/Enemy.h"
+
+#include "core/Controller.h"
+#include "core/GameConfig.h"
 
 Enemy::Enemy(Controller* controller, QObject* parent):
     QObject(parent),
     m_x(0),
-    m_y(-50),
-    ySpeed(1),
+    m_y(-GameConfig::enemyHeight),
+    ySpeed(GameConfig::enemyYSpeed),
     m_despawnY(0)
 {
     connect(&eTime, &QTimer::timeout, this, &Enemy::updateEnemy);
-    eTime.start(50);
+    eTime.start(GameConfig::enemyFrameIntervalMs);
 
     connect(this, &Enemy::enemyDestroyed, controller, &Controller::deleteEnemy);
 }
@@ -21,4 +23,3 @@ void Enemy::updateEnemy()
         emit enemyDestroyed(this);
     }
 }
-

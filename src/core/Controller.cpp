@@ -1,19 +1,15 @@
-#include "Controller.h"
-#include <qdebug.h>
-#include <QRandomGenerator>
+#include "core/Controller.h"
+
+#include "core/GameConfig.h"
+
 #include <QHash>
+#include <QRandomGenerator>
 #include <QSet>
 #include <cmath>
 #include <utility>
 
 namespace {
-//cell must be at least as big as the largest entity, so a box never
-//spans more than 2x2 cells
-constexpr double cellSize = 64.0;
-constexpr double bulletWidth = 10.0;
-constexpr double bulletHeight = 30.0;
-constexpr double enemySize = 50.0;
-constexpr double playerSize = 50.0;
+using namespace GameConfig;
 
 int cellIndex(double value){
     return static_cast<int>(std::floor(value / cellSize));
@@ -23,13 +19,17 @@ int cellIndex(double value){
 qint64 cellKey(int cx, int cy){
     return (static_cast<qint64>(cx) << 32) | static_cast<quint32>(cy);
 }
+
+int nextSpawnDelay(){
+    return enemySpawnMinMs + QRandomGenerator::global()->bounded(enemySpawnJitterMs);
+}
 }
 
 Controller::Controller(QObject* parent)
     : QObject(parent),
     m_x(50),
     m_y(50),
-    xSpeed(10),
+    xSpeed(GameConfig::playerXSpeed),
     ySpeed(10),
     minX(0),
     maxX(0),
@@ -37,27 +37,27 @@ Controller::Controller(QObject* parent)
     moveDirection(0)
 {
     connect(&time, &QTimer::timeout, this, &Controller::updateState);
-    time.start(16); //60fps
+    time.start(GameConfig::frameIntervalMs); //60fps
 
     connect(&move, &QTimer::timeout, this, &Controller::updateMovement);
-    move.setInterval(16); //60fps, started only while a key is held
+    move.setInterval(GameConfig::frameIntervalMs); //60fps, started only while a key is held
 
     connect(&startE, &QTimer::timeout, this, &Controller::createEnemies);
-    startE.start(1000 + QRandomGenerator::global()->bounded(2000));//1-3 seconds
+    startE.start(nextSpawnDelay()); //1-3 seconds
 }
 
 double Controller::despawnY() const
 {
-    //bottomY is height - 50, so this is one enemy height below the window
-    return bottomY + (2 * enemySize);
+    //bottomY is height - playerHeight, so this is one enemy height below the window
+    return bottomY + (2 * GameConfig::enemyHeight);
 }
 
 void Controller::setBoundaries(double width, double height)
 {
     minX = 0;
-    maxX = width - 50;
+    maxX = width - GameConfig::playerWidth;
 
-    bottomY = height - 50;
+    bottomY = height - GameConfig::playerHeight;
 
     // Start player at bottom
     m_y = bottomY;
@@ -72,8 +72,8 @@ void Controller::setBoundaries(double width, double height)
 
 bool Controller::enemyReachedBottom()
 {
-    //an enemy box runs from y to y + enemySize, and the window bottom sits at
-    //bottomY + enemySize, so touching down means y has caught up with bottomY
+    //an enemy box runs from y to y + enemyHeight, and the window bottom sits at
+    //bottomY + playerHeight, so touching down means y has caught up with bottomY
     for(Enemy* enemy : std::as_const(enemyList)){
         if(enemy->y() >= bottomY){
             return true;
@@ -86,16 +86,16 @@ bool Controller::enemyHitPlayer()
 {
     //only one player box, so a plain sweep beats building a grid for it
     const double playerLeft = m_x;
-    const double playerRight = playerLeft + playerSize;
+    const double playerRight = playerLeft + GameConfig::playerWidth;
     const double playerTop = m_y;
-    const double playerBottom = playerTop + playerSize;
+    const double playerBottom = playerTop + GameConfig::playerHeight;
 
     for(Enemy* enemy : std::as_const(enemyList))
     {
         const double enemyLeft = enemy->x();
-        const double enemyRight = enemyLeft + enemySize;
+        const double enemyRight = enemyLeft + GameConfig::enemyWidth;
         const double enemyTop = enemy->y();
-        const double enemyBottom = enemyTop + enemySize;
+        const double enemyBottom = enemyTop + GameConfig::enemyHeight;
 
         if(playerRight > enemyLeft && playerLeft < enemyRight
             && playerTop < enemyBottom && playerBottom > enemyTop)
@@ -169,32 +169,33 @@ void Controller::applyThrust(){
         return;
     }
 
-    ySpeed= maxThrust;
+    ySpeed = GameConfig::maxThrust;
     if(m_y < bottomY/1.5){
         ySpeed = 0;
     }
 }
 
-Q_INVOKABLE void Controller::fireBullet()
+void Controller::fireBullet()
 {
     if(m_gameOver){
         return;
     }
 
     Bullet* newBullet = new Bullet(this, this);
-    newBullet->setX(m_x + 25);
+    //centre the bullet on the player
+    newBullet->setX(m_x + (GameConfig::playerWidth - GameConfig::bulletWidth) / 2);
     newBullet->setY(m_y);
     bulletList.append(newBullet);
     emit bulletChanged();
 }
 
-Q_INVOKABLE void Controller::createEnemies()
+void Controller::createEnemies()
 {
     if(m_gameOver){
         return;
     }
 
-    startE.start(1000 + QRandomGenerator::global()->bounded(2000));
+    startE.start(nextSpawnDelay());
 
     //nothing to spawn into until QML has handed us the window size
     if(maxX <= 0){
@@ -203,22 +204,17 @@ Q_INVOKABLE void Controller::createEnemies()
 
     Enemy* newEnemy = new Enemy(this, this);
     newEnemy->setX(QRandomGenerator::global()->bounded(static_cast<int>(maxX) + 1));
-    newEnemy->setY(-enemySize);
+    newEnemy->setY(-GameConfig::enemyHeight);
     newEnemy->setDespawnY(despawnY());
     enemyList.append(newEnemy);
 
     emit enemyChanged();
 }
 
-QString Controller::showScore()
-{
-    return QString::number(score());
-}
-
 //slot
 void Controller::updateState(){
     m_y += ySpeed;
-    ySpeed += gravity;
+    ySpeed += GameConfig::gravity;
 
     if(m_y > bottomY){
         m_y = bottomY;
@@ -248,7 +244,6 @@ void Controller::deleteBullet(Bullet *bullet)
         //so it cannot ask to be deleted again while the event loop catches up
         bullet->freeze();
         bullet->deleteLater();
-        //qInfo()<<"Bullet Destroyed";
     }
 }
 
@@ -264,7 +259,6 @@ void Controller::deleteEnemy(Enemy *enemy)
 
         enemy->freeze();
         enemy->deleteLater();
-        //qInfo()<<"Enemy Destroyed";
     }
 }
 
@@ -282,9 +276,9 @@ void Controller::checkCollision()
     for(Enemy* enemy : std::as_const(enemyList))
     {
         const int minCX = cellIndex(enemy->x());
-        const int maxCX = cellIndex(enemy->x() + enemySize);
+        const int maxCX = cellIndex(enemy->x() + GameConfig::enemyWidth);
         const int minCY = cellIndex(enemy->y());
-        const int maxCY = cellIndex(enemy->y() + enemySize);
+        const int maxCY = cellIndex(enemy->y() + GameConfig::enemyHeight);
 
         for(int cx = minCX; cx <= maxCX; cx++){
             for(int cy = minCY; cy <= maxCY; cy++){
@@ -302,9 +296,9 @@ void Controller::checkCollision()
         Bullet* bullet = bulletList[i];
 
         const double bulletLeft = bullet->x();
-        const double bulletRight = bulletLeft + bulletWidth;
+        const double bulletRight = bulletLeft + GameConfig::bulletWidth;
         const double bulletTop = bullet->y();
-        const double bulletBottom = bulletTop + bulletHeight;
+        const double bulletBottom = bulletTop + GameConfig::bulletHeight;
 
         const int minCX = cellIndex(bulletLeft);
         const int maxCX = cellIndex(bulletRight);
@@ -328,9 +322,9 @@ void Controller::checkCollision()
                     }
 
                     const double enemyLeft = enemy->x();
-                    const double enemyRight = enemyLeft + enemySize;
+                    const double enemyRight = enemyLeft + GameConfig::enemyWidth;
                     const double enemyTop = enemy->y();
-                    const double enemyBottom = enemyTop + enemySize;
+                    const double enemyBottom = enemyTop + GameConfig::enemyHeight;
 
                     if(bulletRight > enemyLeft && bulletLeft < enemyRight
                         && bulletTop < enemyBottom && bulletBottom > enemyTop)
@@ -347,8 +341,8 @@ void Controller::checkCollision()
             destroyed.insert(hit);
             deleteBullet(bullet);
             deleteEnemy(hit);
-            setScore(score() +10);
-            emit scoreChanged();
+            //setScore already emits scoreChanged
+            setScore(score() + GameConfig::pointsPerKill);
         }
     }
 }

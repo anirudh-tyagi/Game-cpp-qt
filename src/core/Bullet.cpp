@@ -1,14 +1,16 @@
-#include "Bullet.h"
-#include <Controller.h>
+#include "core/Bullet.h"
+
+#include "core/Controller.h"
+#include "core/GameConfig.h"
 
 Bullet::Bullet(Controller* controller, QObject* parent)
     : QObject(parent),
     m_x(),
     m_y(),
-    ySpeed(-10)
+    ySpeed(GameConfig::bulletYSpeed)
 {
     connect(&bTime, &QTimer::timeout, this, &Bullet::updateBullet);
-    bTime.start(16); //60fps
+    bTime.start(GameConfig::frameIntervalMs);
 
     connect(this, &Bullet::bulletDestroyed, controller, &Controller::deleteBullet);
 }
@@ -20,4 +22,3 @@ void Bullet::updateBullet()
         emit bulletDestroyed(this);
     }
 }
-
