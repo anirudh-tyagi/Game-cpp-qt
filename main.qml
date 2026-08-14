@@ -34,13 +34,20 @@ Window {
                             }
                             if(event.key === Qt.Key_Up)
                             {
-                                control.applyThrust()
+                                control.applyThrust();
                             }
                             if(event.key === Qt.Key_Space)
                             {
                                 control.fireBullet();
                             }
                         }
+        Keys.onReleased: (event) =>
+                         {
+                            if(event.key === Qt.Key_Left || event.key === Qt.Key_Right)
+                             {
+                                control.stopMovement();
+                             }
+                         }
     }
     Repeater {
         model: control.bullets

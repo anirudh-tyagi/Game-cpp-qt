@@ -50,10 +50,13 @@ public:
     {
         return QQmlListProperty(this, &enemyList);
     }
+    Q_INVOKABLE void stopMovement();
 public slots:
     void updateState();
     void deleteBullet(Bullet* bullet);
-
+    void deleteEnemy(Enemy *enemy);
+    void checkCollision();
+    void updateMovement();
 signals:
     void xChanged();
     void yChanged();
@@ -62,6 +65,7 @@ signals:
     void bulletDestroyed();
 
 private:
+    double despawnY() const; //y below which an enemy is fully off screen
     double m_x; //current position of rect on x direction
     double m_y; //current position of rect on y dirsction
     double xSpeed;
@@ -75,6 +79,8 @@ private:
     QTimer startE;
     QList<Bullet*> bulletList;
     QList<Enemy*> enemyList;
+    int moveDirection;
+    QTimer move;
 };
 
 #endif // CONTROLLER_H

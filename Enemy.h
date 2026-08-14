@@ -3,6 +3,9 @@
 
 #include <QObject>
 #include <QTimer>
+
+class Controller;
+
 class Enemy: public QObject
 {
     Q_OBJECT
@@ -11,9 +14,12 @@ class Enemy: public QObject
 public:
 
 
-    Enemy(QObject* parent = nullptr);
+    Enemy(Controller* controller, QObject* parent = nullptr);
     double x(){return m_x;}
     double y(){return m_y;}
+
+    //y past which the enemy has left the screen and cleans itself up
+    void setDespawnY(double value){m_despawnY = value;}
 
     void setX(double value){
         if(m_x != value){
@@ -32,10 +38,12 @@ public slots:
 signals:
     void xChanged();
     void yChanged();
+    void enemyDestroyed(Enemy* enemy);
 private:
     double m_x;
     double m_y;
     double ySpeed;
+    double m_despawnY;
     QTimer eTime;
 
 };
