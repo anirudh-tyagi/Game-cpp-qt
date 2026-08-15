@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QTimer>
 
+#include "core/GameConfig.h"
+
 class Controller;
 
 class Bullet: public QObject
@@ -16,8 +18,10 @@ public:
     double x(){return m_x;}
     double y(){return m_y;}
 
-    //stop moving but stay on screen, used when the game ends
+    //stop moving but stay on screen, used when the game ends or is paused
     void freeze(){bTime.stop();}
+    //pick the descent back up after a pause
+    void unfreeze(){bTime.start(GameConfig::frameIntervalMs);}
 
     void setX(double value){
         if(m_x != value){

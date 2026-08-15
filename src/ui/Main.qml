@@ -8,7 +8,7 @@ Window {
     width: Screen.width
     height: Screen.height
     visible: true
-    title: qsTr("Game01")
+    title: qsTr("Skyward")
     color: Theme.background
 
     //the simulation needs the window size to clamp the player and to know
@@ -26,31 +26,85 @@ Window {
     //keyboard goes straight to the controller, no game state lives in QML.
     //the controller ignores the play keys while no run is in progress
     Item {
+        id: input
+
         anchors.fill: parent
         focus: true
 
+        //which arrows are physically down. The controller only carries one
+        //direction, so releasing one arrow while the other is still held has to
+        //hand over rather than stop
+        property bool leftHeld: false
+        property bool rightHeld: false
+
         Keys.onPressed: (event) => {
-            if (event.key === Qt.Key_Left)
+            //auto-repeat would drive the ship at the OS key-repeat rate on top
+            //of the controller's own 60fps timer, making both movement speed and
+            //fire rate depend on a keyboard setting
+            if (event.isAutoRepeat)
+                return
+
+            if (event.key === Qt.Key_Left) {
+                input.leftHeld = true
                 control.moveLeft()
-            if (event.key === Qt.Key_Right)
+            }
+            if (event.key === Qt.Key_Right) {
+                input.rightHeld = true
                 control.moveRight()
+            }
             if (event.key === Qt.Key_Up)
                 control.applyThrust()
             if (event.key === Qt.Key_Space)
                 control.fireBullet()
 
-            //menu shortcuts, only live while the menu is up
-            if (!control.running) {
-                if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
-                    control.startGame()
-                if (event.key === Qt.Key_Escape)
+            if (event.key === Qt.Key_Escape) {
+                //escape means "stop" during a run and "leave" on the menu
+                if (control.running)
+                    control.togglePause()
+                else
                     Qt.quit()
+            }
+
+            //start, restart, or resume, whichever page is up
+            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                if (control.paused)
+                    control.togglePause()
+                else if (!control.running)
+                    control.startGame()
             }
         }
 
         Keys.onReleased: (event) => {
-            if (event.key === Qt.Key_Left || event.key === Qt.Key_Right)
-                control.stopMovement()
+            //X11 synthesises press/release pairs for auto-repeat, which would
+            //otherwise stutter a held arrow
+            if (event.isAutoRepeat)
+                return
+
+            if (event.key === Qt.Key_Left)
+                input.leftHeld = false
+            if (event.key === Qt.Key_Right)
+                input.rightHeld = false
+
+            if (event.key === Qt.Key_Left || event.key === Qt.Key_Right) {
+                //only actually stop once neither arrow is down
+                if (input.leftHeld)
+                    control.moveLeft()
+                else if (input.rightHeld)
+                    control.moveRight()
+                else
+                    control.stopMovement()
+            }
+        }
+
+        //a run frozen mid-press resumes with the keys in an unknown state, and
+        //the controller drops its direction on resume, so drop ours too
+        Connections {
+            target: control
+
+            function onPausedChanged() {
+                input.leftHeld = false
+                input.rightHeld = false
+            }
         }
     }
 
@@ -116,20 +170,36 @@ Window {
         }
     }
 
-    //one page for both moments, the wording is all that changes
+    //one page for all three moments, the wording is all that changes
     MenuOverlay {
         anchors.fill: parent
-        visible: !control.running
+        visible: !control.running || control.paused
 
-        title: control.gameOver ? qsTr("Take a breath") : qsTr("Skyward")
-        subtitle: control.gameOver
-                  ? qsTr("That run is over. You scored %1, and reached level %2.")
-                    .arg(control.score).arg(control.level)
-                  : qsTr("A gentle climb. Drift, aim, and take your time.")
-        hint: qsTr("← → to move · ↑ to thrust · space to fire")
-        actionText: control.gameOver ? qsTr("Play again") : qsTr("Start game")
+        title: {
+            if (control.paused)
+                return qsTr("Held")
+            return control.gameOver ? qsTr("Take a breath") : qsTr("Skyward")
+        }
+        subtitle: {
+            if (control.paused)
+                return qsTr("Still going. You are on %1, at level %2.")
+                       .arg(control.score).arg(control.level)
+            if (control.gameOver)
+                return qsTr("That run is over. You scored %1, and reached level %2.")
+                       .arg(control.score).arg(control.level)
+            return qsTr("A gentle climb. Drift, aim, and take your time.")
+        }
+        hint: control.paused
+              ? qsTr("esc or enter to carry on")
+              : qsTr("← → to move · ↑ to thrust · space to fire · esc to pause")
+        actionText: {
+            if (control.paused)
+                return qsTr("Resume")
+            return control.gameOver ? qsTr("Play again") : qsTr("Start game")
+        }
 
-        onActionClicked: control.startGame()
+        //resuming and starting are different things, a pause must not wipe the run
+        onActionClicked: control.paused ? control.togglePause() : control.startGame()
         onQuitClicked: Qt.quit()
     }
 }

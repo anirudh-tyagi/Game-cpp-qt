@@ -1,8 +1,9 @@
 #ifndef GAMECONFIG_H
 #define GAMECONFIG_H
 
-//Tunables shared by the simulation. The view mirrors the sizes in
-//src/ui/Theme.qml, keep the two in sync when changing anything here.
+//Tunables shared by the simulation. The entity sizes below are the single
+//source of truth, src/ui/Theme.qml reads them back through the "config" context
+//property (see src/core/Config.h) rather than restating them.
 namespace GameConfig {
 
 //entity boxes, used for spawning and for collision
@@ -25,6 +26,9 @@ constexpr double bulletYSpeed = -10.0; //negative is up the screen
 constexpr double enemyYSpeed = 1.0;
 constexpr double gravity = 0.5;
 constexpr double maxThrust = -15.0;
+//how high the ship may climb, as a fraction of the floor line. Smaller y is
+//higher up the screen, so the ceiling sits at bottomY * this
+constexpr double ceilingFraction = 1.0 / 1.5;
 
 //collision grid cell, at least as big as the largest entity so a box never
 //spans more than 2x2 cells

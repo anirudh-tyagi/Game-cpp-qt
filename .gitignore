@@ -9,6 +9,7 @@ out/
 *.user.*
 *.pro.user
 *.pro.user.*
+*.autosave
 
 # CMake generated files
 CMakeCache.txt
@@ -31,3 +32,6 @@ CTestTestfile.cmake
 # OS files
 .DS_Store
 Thumbs.db
+
+# Local documentation, kept out of the repo
+docs/CODE_TOUR.md

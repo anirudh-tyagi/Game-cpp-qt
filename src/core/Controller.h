@@ -21,6 +21,9 @@ class Controller: public QObject
     Q_PROPERTY(bool gameOver READ gameOver NOTIFY gameOverChanged)
     //false before the first start and once a run has ended, the menu keys off it
     Q_PROPERTY(bool running READ running NOTIFY runningChanged)
+    //a run that is still live but frozen. Distinct from !running, which means
+    //there is no run to go back to
+    Q_PROPERTY(bool paused READ paused NOTIFY pausedChanged)
     //true while the ship is still climbing, the exhaust plume keys off it
     Q_PROPERTY(bool thrusting READ thrusting NOTIFY thrustingChanged)
 
@@ -49,6 +52,7 @@ public:
     int level() const {return m_level;}
     bool gameOver() const {return m_gameOver;}
     bool running() const {return m_running;}
+    bool paused() const {return m_paused;}
     bool thrusting() const {return m_thrusting;}
 
     //this helps us expose our C++ obj or class to qmls
@@ -65,6 +69,8 @@ public:
     Q_INVOKABLE void setBoundaries(double width, double height);
     //starts a fresh run, also used by the restart button after a game over
     Q_INVOKABLE void startGame();
+    //freeze or resume a live run. Does nothing when there is no run
+    Q_INVOKABLE void togglePause();
     Q_INVOKABLE void moveLeft();
     Q_INVOKABLE void moveRight();
     Q_INVOKABLE void stopMovement();
@@ -84,15 +90,16 @@ signals:
     void yChanged();
     void bulletChanged();
     void enemyChanged();
-    void bulletDestroyed();
     void scoreChanged();
     void levelChanged();
     void gameOverChanged();
     void runningChanged();
+    void pausedChanged();
     void thrustingChanged();
 
 private:
     double despawnY() const; //y below which an enemy is fully off screen
+    double ceilingY() const; //y above which the ship cannot climb
     bool enemyReachedBottom(); //true once any enemy touches the bottom edge
     bool enemyHitPlayer(); //true once any enemy box overlaps the player box
     void endGame(); //freeze everything and flag the game as over
@@ -100,12 +107,19 @@ private:
     void setThrusting(bool value); //only emits when the plume actually changes
     void updateLevel(); //recompute the level from the score
 
+    //drop one entity without telling QML. A QQmlListProperty notify makes the
+    //Repeater rebuild every delegate, so a frame that kills several enemies
+    //batches them and emits once, rather than once per kill
+    bool removeBullet(Bullet* bullet);
+    bool removeEnemy(Enemy* enemy);
+
     double m_x; //current position of rect on x direction
     double m_y; //current position of rect on y dirsction
     double xSpeed;
     double ySpeed;
     double minX;
-    double maxX;
+    double maxX;      //rightmost x the player may occupy
+    double maxEnemyX; //rightmost x an enemy may spawn at, sized off enemyWidth
     double bottomY;
     QTimer time;
     QTimer startE;
@@ -117,7 +131,11 @@ private:
     int m_level = 1;
     bool m_gameOver = false;
     bool m_running = false;
+    bool m_paused = false;
     bool m_thrusting = false;
+    //what was left on the spawn timer when the run was paused, so resuming
+    //carries on the wave cadence instead of handing out a fresh interval
+    int pausedSpawnMs = 0;
 };
 
 #endif // CONTROLLER_H

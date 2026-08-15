@@ -3,6 +3,7 @@
 # through Q_PROPERTY / Q_INVOKABLE so a view layer can bind to it.
 qt_add_library(game_core STATIC
     GameConfig.h
+    Config.h
     Controller.h
     Controller.cpp
     Bullet.h

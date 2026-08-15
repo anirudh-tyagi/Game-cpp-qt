@@ -48,6 +48,7 @@ Controller::Controller(QObject* parent)
     ySpeed(10),
     minX(0),
     maxX(0),
+    maxEnemyX(0),
     bottomY(0),
     moveDirection(0)
 {
@@ -68,11 +69,15 @@ void Controller::clearEntities()
     //QML cannot re-read the model while a dying pointer is still in it
     const QList<Bullet*> bullets = std::move(bulletList);
     bulletList.clear();
-    emit bulletChanged();
+    if(!bullets.isEmpty()){
+        emit bulletChanged();
+    }
 
     const QList<Enemy*> enemies = std::move(enemyList);
     enemyList.clear();
-    emit enemyChanged();
+    if(!enemies.isEmpty()){
+        emit enemyChanged();
+    }
 
     for(Bullet* bullet : bullets){
         bullet->freeze();
@@ -121,6 +126,11 @@ void Controller::startGame()
         emit gameOverChanged();
     }
 
+    if(m_paused){
+        m_paused = false;
+        emit pausedChanged();
+    }
+
     m_running = true;
     emit runningChanged();
 
@@ -128,28 +138,97 @@ void Controller::startGame()
     startE.start(nextSpawnDelay(m_level)); //1-3 seconds at level 1
 }
 
+void Controller::togglePause()
+{
+    //only a live run can be paused. There is nothing to freeze on the start
+    //page or the game-over page, and unpausing into them would be worse
+    if(!m_running){
+        return;
+    }
+
+    m_paused = !m_paused;
+
+    if(m_paused){
+        //hold the spawn timer where it stands, otherwise a pause would hand the
+        //player a full fresh interval before the next wave
+        pausedSpawnMs = qMax(1, startE.remainingTime());
+
+        time.stop();
+        move.stop();
+        startE.stop();
+        setThrusting(false);
+
+        //every entity drives itself off its own timer, so the world carries on
+        //underneath unless each one is stopped too
+        for(Enemy* enemy : std::as_const(enemyList)){
+            enemy->freeze();
+        }
+        for(Bullet* bullet : std::as_const(bulletList)){
+            bullet->freeze();
+        }
+    }
+    else {
+        for(Enemy* enemy : std::as_const(enemyList)){
+            enemy->unfreeze();
+        }
+        for(Bullet* bullet : std::as_const(bulletList)){
+            bullet->unfreeze();
+        }
+
+        time.start();
+        startE.start(pausedSpawnMs);
+        //the move timer stays down, it only runs while an arrow is held and the
+        //key release may well have happened while we were paused
+        moveDirection = 0;
+    }
+
+    emit pausedChanged();
+}
+
 double Controller::despawnY() const
 {
-    //bottomY is height - playerHeight, so this is one enemy height below the window
+    //bottomY is height - playerHeight, so this is one enemy height below the window.
+    //A live run ends the moment an enemy passes bottomY, well short of this, so
+    //this is only a safety net for an enemy that somehow outlives that check
     return bottomY + (2 * GameConfig::enemyHeight);
+}
+
+double Controller::ceilingY() const
+{
+    return bottomY * GameConfig::ceilingFraction;
 }
 
 void Controller::setBoundaries(double width, double height)
 {
     minX = 0;
     maxX = width - GameConfig::playerWidth;
+    //enemies are sized off enemyWidth, not playerWidth, so they get their own
+    //right edge. The two constants happen to match today
+    maxEnemyX = width - GameConfig::enemyWidth;
 
     bottomY = height - GameConfig::playerHeight;
 
-    // Start player at bottom
-    m_y = bottomY;
+    if(m_running){
+        //a resize mid-flight must not drop the ship out of the sky, only pull it
+        //back inside a window that has shrunk under it
+        if(m_y > bottomY){
+            m_y = bottomY;
+            emit yChanged();
+        }
+    }
+    else {
+        m_y = bottomY; //park it on the floor, ready for the next run
+        emit yChanged();
+    }
+
+    //a narrower window can leave the ship outside the new right edge, where it
+    //would sit until the player happened to press left
+    setX(qBound(minX, m_x, qMax(minX, maxX)));
 
     // enemies spawned before a resize would otherwise keep the old cutoff
     for(Enemy* enemy : std::as_const(enemyList)){
         enemy->setDespawnY(despawnY());
     }
-
-    emit yChanged();
 }
 
 bool Controller::enemyReachedBottom()
@@ -197,6 +276,12 @@ void Controller::endGame()
     m_gameOver = true;
     m_running = false;
 
+    //keeps "paused implies a run to go back to" true unconditionally
+    if(m_paused){
+        m_paused = false;
+        emit pausedChanged();
+    }
+
     //every entity drives itself off its own timer, so freeze them all and the
     //last frame stays on screen instead of the world carrying on underneath
     time.stop();
@@ -218,7 +303,7 @@ void Controller::endGame()
 
 void Controller::moveLeft()
 {
-    if(!m_running){
+    if(!m_running || m_paused){
         return;
     }
 
@@ -231,7 +316,7 @@ void Controller::moveLeft()
 }
 
 void Controller::moveRight(){
-    if(!m_running){
+    if(!m_running || m_paused){
         return;
     }
 
@@ -250,19 +335,20 @@ void Controller::stopMovement()
 }
 
 void Controller::applyThrust(){
-    if(!m_running){
+    if(!m_running || m_paused){
         return;
     }
 
+    //no altitude test here. The ceiling is a property of the world, so
+    //updateState() enforces it every frame, the same way it does the floor.
+    //Testing it on the key press alone only gated the input, and thrust applied
+    //just below the line still carried the ship clean through it
     ySpeed = GameConfig::maxThrust;
-    if(m_y < bottomY/1.5){
-        ySpeed = 0;
-    }
 }
 
 void Controller::fireBullet()
 {
-    if(!m_running){
+    if(!m_running || m_paused){
         return;
     }
 
@@ -276,19 +362,21 @@ void Controller::fireBullet()
 
 void Controller::createEnemies()
 {
-    if(!m_running){
+    if(!m_running || m_paused){
         return;
     }
 
     startE.start(nextSpawnDelay(m_level));
 
     //nothing to spawn into until QML has handed us the window size
-    if(maxX <= 0){
+    if(maxEnemyX <= 0){
         return;
     }
 
     Enemy* newEnemy = new Enemy(this, this);
-    newEnemy->setX(QRandomGenerator::global()->bounded(static_cast<int>(maxX) + 1));
+    //sized off enemyWidth, so the whole sprite lands on screen and the right
+    //edge stays reachable even if the enemy and player boxes ever differ
+    newEnemy->setX(QRandomGenerator::global()->bounded(static_cast<int>(maxEnemyX) + 1));
     newEnemy->setY(-GameConfig::enemyHeight);
     newEnemy->setDespawnY(despawnY());
     newEnemy->setYSpeed(enemySpeedForLevel(m_level));
@@ -299,19 +387,30 @@ void Controller::createEnemies()
 
 //slot
 void Controller::updateState(){
-    m_y += ySpeed;
+    double newY = m_y + ySpeed;
     ySpeed += GameConfig::gravity;
 
-    if(m_y > bottomY){
-        m_y = bottomY;
+    //the world is a corridor, and both ends stop the ship rather than only
+    //catching its position. Letting ySpeed run on past a clamp left it growing
+    //without bound while the ship sat still on the floor
+    if(newY > bottomY){
+        newY = bottomY;
+        ySpeed = 0;
+    }
+    else if(newY < ceilingY()){
+        newY = ceilingY();
+        ySpeed = 0;
     }
 
     //the plume burns for as long as the ship is still gaining height, a flag on
     //the key press alone would blink out after a single frame
     setThrusting(ySpeed < 0);
 
+    //setY already guards on inequality, so a ship resting on the floor stops
+    //re-evaluating its binding sixty times a second
+    setY(newY);
+
     checkCollision();
-    emit yChanged();
 
     //checked after the collision pass so an enemy shot on its last frame
     //still counts as killed rather than as a landing or a crash
@@ -320,36 +419,54 @@ void Controller::updateState(){
     }
 }
 
-void Controller::deleteBullet(Bullet *bullet)
+bool Controller::removeBullet(Bullet *bullet)
 {
     int index= bulletList.indexOf(bullet);
-    if (index != -1)
+    if (index == -1)
     {
-        //out of the list first, so QML never re-reads the model while a
-        //pointer to a dying bullet is still in it
-        bulletList.removeAt(index);
-        emit bulletChanged();
+        return false;
+    }
 
-        //this normally runs from the bullet's own timeout, so a plain delete
-        //would free the object underneath its own call stack, stop its timer
-        //so it cannot ask to be deleted again while the event loop catches up
-        bullet->freeze();
-        bullet->deleteLater();
+    //out of the list first, so QML never re-reads the model while a
+    //pointer to a dying bullet is still in it
+    bulletList.removeAt(index);
+
+    //this normally runs from the bullet's own timeout, so a plain delete
+    //would free the object underneath its own call stack, stop its timer
+    //so it cannot ask to be deleted again while the event loop catches up
+    bullet->freeze();
+    bullet->deleteLater();
+    return true;
+}
+
+bool Controller::removeEnemy(Enemy *enemy)
+{
+    int index= enemyList.indexOf(enemy);
+    if (index == -1)
+    {
+        return false;
+    }
+
+    //same ordering as removeBullet, list first then the object
+    enemyList.removeAt(index);
+
+    enemy->freeze();
+    enemy->deleteLater();
+    return true;
+}
+
+void Controller::deleteBullet(Bullet *bullet)
+{
+    if(removeBullet(bullet)){
+        emit bulletChanged();
     }
 }
 
 
 void Controller::deleteEnemy(Enemy *enemy)
 {
-    int index= enemyList.indexOf(enemy);
-    if (index != -1)
-    {
-        //same ordering as deleteBullet, list first then the object
-        enemyList.removeAt(index);
+    if(removeEnemy(enemy)){
         emit enemyChanged();
-
-        enemy->freeze();
-        enemy->deleteLater();
     }
 }
 
@@ -381,6 +498,12 @@ void Controller::checkCollision()
     //an enemy sits in up to 4 cells, so the same pointer can be visited twice,
     //and it is already deleted after the first hit
     QSet<Enemy*> destroyed;
+
+    //a QQmlListProperty notify makes the Repeater tear down and rebuild every
+    //delegate, so a frame with three kills used to cost six full rebuilds.
+    //Collect the changes here and tell QML once, at the end
+    bool bulletsChanged = false;
+    bool enemiesChanged = false;
 
     for(int i = bulletList.size() -1; i>=0; i--)
     {
@@ -430,11 +553,18 @@ void Controller::checkCollision()
         if(hit)
         {
             destroyed.insert(hit);
-            deleteBullet(bullet);
-            deleteEnemy(hit);
+            bulletsChanged |= removeBullet(bullet);
+            enemiesChanged |= removeEnemy(hit);
             //setScore already emits scoreChanged
             setScore(score() + GameConfig::pointsPerKill);
         }
+    }
+
+    if(bulletsChanged){
+        emit bulletChanged();
+    }
+    if(enemiesChanged){
+        emit enemyChanged();
     }
 }
 

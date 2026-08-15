@@ -2,8 +2,10 @@ pragma Singleton
 
 import QtQuick
 
-//Single place for the look of the game. The entity sizes mirror
-//src/core/GameConfig.h, keep the two in sync when changing anything here.
+//Single place for the look of the game.
+//Colours, fonts and durations are decided here. The entity sizes are not, they
+//are read back from the simulation through the "config" context property, so
+//the view can never draw a box a different size from the one collision uses.
 QtObject {
     id: theme
 
@@ -24,7 +26,7 @@ QtObject {
     readonly property color scoreColor: "#C2CFE0"
     readonly property color levelColor: "#6F8199" //secondary to the score
 
-    //sprites, one per entity. Sizes stay in step with GameConfig.h
+    //sprites, one per entity
     readonly property string playerSource: "qrc:/player/rocket.png"
     readonly property string thrusterSource: "qrc:/player/thruster.gif"
     readonly property string bulletSource: "qrc:/bullet/bullet.png"
@@ -33,10 +35,11 @@ QtObject {
         return "qrc:/enemy/enemy" + sprite + ".png"
     }
 
-    readonly property real playerSize: 50
-    readonly property real enemySize: 50
-    readonly property real bulletWidth: 10
-    readonly property real bulletHeight: 30
+    //straight from GameConfig.h, never restated here
+    readonly property real playerSize: config.playerWidth
+    readonly property real enemySize: config.enemyWidth
+    readonly property real bulletWidth: config.bulletWidth
+    readonly property real bulletHeight: config.bulletHeight
     //drawn larger than the 50x50 collision box, the plume is decoration and
     //must not suggest a bigger hitbox than the ship actually has
     readonly property real thrusterWidth: 26

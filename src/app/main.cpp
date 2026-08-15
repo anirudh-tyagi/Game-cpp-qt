@@ -4,6 +4,7 @@
 #include <QQmlContext>
 #include <QTranslator>
 
+#include "core/Config.h"
 #include "core/Controller.h"
 
 int main(int argc, char *argv[])
@@ -13,7 +14,7 @@ int main(int argc, char *argv[])
     QTranslator translator;
     const QStringList uiLanguages = QLocale::system().uiLanguages();
     for (const QString &locale : uiLanguages) {
-        const QString baseName = "Game01_" + QLocale(locale).name();
+        const QString baseName = "Skyward_" + QLocale(locale).name();
         if (translator.load(":/i18n/" + baseName)) {
             app.installTranslator(&translator);
             break;
@@ -21,13 +22,17 @@ int main(int argc, char *argv[])
     }
 
     //declared before the engine on purpose, locals die in reverse order so the
-    //engine tears down its QML (and every binding onto "control") first
+    //engine tears down its QML (and every binding onto "control" or "config")
+    //first
+    Config config;
     Controller control;
 
     QQmlApplicationEngine engine;
 
-    //the single bridge between the simulation and the view layer
+    //the two bridges between the simulation and the view layer: live game state,
+    //and the entity sizes the view has to draw the same way collision sees them
     engine.rootContext()->setContextProperty("control", &control);
+    engine.rootContext()->setContextProperty("config", &config);
 
     QObject::connect(
         &engine,
@@ -35,7 +40,7 @@ int main(int argc, char *argv[])
         &app,
         []() { QCoreApplication::exit(-1); },
         Qt::QueuedConnection);
-    engine.loadFromModule("Game01", "Main");
+    engine.loadFromModule("Skyward", "Main");
 
     return app.exec();
 }

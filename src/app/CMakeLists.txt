@@ -6,26 +6,26 @@
 # qrc:/enemy/..., qrc:/player/..., qrc:/bullet/... and qrc:/fonts/...
 qt_add_resources(GAME_ASSETS ${CMAKE_SOURCE_DIR}/assets/assets.qrc)
 
-qt_add_executable(appGame01
+qt_add_executable(appSkyward
     main.cpp
     ${GAME_ASSETS}
 )
 
 # game_uiplugin comes with qt_add_qml_module and registers the QML module,
-# linking it is what makes loadFromModule("Game01", "Main") resolve
-target_link_libraries(appGame01 PRIVATE
+# linking it is what makes loadFromModule("Skyward", "Main") resolve
+target_link_libraries(appSkyward PRIVATE
     Qt6::Quick
     game_core
     game_uiplugin
 )
 
 # compiles i18n/*.ts into the binary at :/i18n, where main.cpp looks for them
-qt_add_translations(appGame01
-    TS_FILES ${CMAKE_SOURCE_DIR}/i18n/Game01_en_IN.ts
+qt_add_translations(appSkyward
+    TS_FILES ${CMAKE_SOURCE_DIR}/i18n/Skyward_en_IN.ts
 )
 
-set_target_properties(appGame01 PROPERTIES
-    MACOSX_BUNDLE_GUI_IDENTIFIER com.example.appGame01
+set_target_properties(appSkyward PROPERTIES
+    MACOSX_BUNDLE_GUI_IDENTIFIER com.example.skyward
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE TRUE

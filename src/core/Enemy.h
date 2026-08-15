@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QTimer>
 
+#include "core/GameConfig.h"
+
 class Controller;
 
 class Enemy: public QObject
@@ -30,8 +32,10 @@ public:
     //it arrived in even if the player levels up mid-descent
     void setYSpeed(double value){ySpeed = value;}
 
-    //stop moving but stay on screen, used when the game ends
+    //stop moving but stay on screen, used when the game ends or is paused
     void freeze(){eTime.stop();}
+    //pick the descent back up after a pause
+    void unfreeze(){eTime.start(GameConfig::enemyFrameIntervalMs);}
 
     void setX(double value){
         if(m_x != value){
