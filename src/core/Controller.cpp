@@ -65,7 +65,7 @@ Controller::Controller(QObject* parent)
 
 void Controller::clearEntities()
 {
-    //same ordering as deleteBullet/deleteEnemy, list first then the objects, so
+    //same ordering as removeBullet/removeEnemy, list first then the objects, so
     //QML cannot re-read the model while a dying pointer is still in it
     const QList<Bullet*> bullets = std::move(bulletList);
     bulletList.clear();
@@ -185,14 +185,6 @@ void Controller::togglePause()
     emit pausedChanged();
 }
 
-double Controller::despawnY() const
-{
-    //bottomY is height - playerHeight, so this is one enemy height below the window.
-    //A live run ends the moment an enemy passes bottomY, well short of this, so
-    //this is only a safety net for an enemy that somehow outlives that check
-    return bottomY + (2 * GameConfig::enemyHeight);
-}
-
 double Controller::ceilingY() const
 {
     return bottomY * GameConfig::ceilingFraction;
@@ -224,11 +216,6 @@ void Controller::setBoundaries(double width, double height)
     //a narrower window can leave the ship outside the new right edge, where it
     //would sit until the player happened to press left
     setX(qBound(minX, m_x, qMax(minX, maxX)));
-
-    // enemies spawned before a resize would otherwise keep the old cutoff
-    for(Enemy* enemy : std::as_const(enemyList)){
-        enemy->setDespawnY(despawnY());
-    }
 }
 
 bool Controller::enemyReachedBottom()
@@ -352,6 +339,8 @@ void Controller::fireBullet()
         return;
     }
 
+    //first arg wires the destruction signal, second parents it to the controller
+    //so anything still in flight at shutdown is destroyed with it
     Bullet* newBullet = new Bullet(this, this);
     //centre the bullet on the player
     newBullet->setX(m_x + (GameConfig::playerWidth - GameConfig::bulletWidth) / 2);
@@ -373,12 +362,13 @@ void Controller::createEnemies()
         return;
     }
 
-    Enemy* newEnemy = new Enemy(this, this);
+    //parented to the controller, so anything still alive at shutdown is
+    //destroyed with it rather than leaked
+    Enemy* newEnemy = new Enemy(this);
     //sized off enemyWidth, so the whole sprite lands on screen and the right
     //edge stays reachable even if the enemy and player boxes ever differ
     newEnemy->setX(QRandomGenerator::global()->bounded(static_cast<int>(maxEnemyX) + 1));
     newEnemy->setY(-GameConfig::enemyHeight);
-    newEnemy->setDespawnY(despawnY());
     newEnemy->setYSpeed(enemySpeedForLevel(m_level));
     enemyList.append(newEnemy);
 
@@ -462,13 +452,6 @@ void Controller::deleteBullet(Bullet *bullet)
     }
 }
 
-
-void Controller::deleteEnemy(Enemy *enemy)
-{
-    if(removeEnemy(enemy)){
-        emit enemyChanged();
-    }
-}
 
 void Controller::checkCollision()
 {

@@ -78,21 +78,10 @@ To check the QML for errors without running it:
 cmake --build build --target all_qmllint
 ```
 
-## Tests
-
-`game_core` has no Quick dependency, so its tests run headless. They cover the
-boundary arithmetic that is hardest to confirm by eye — what a resize does to the
-ship, where the floor and ceiling stop it, and where enemies may spawn — driving
-`updateState()` by hand so nothing depends on wall-clock timing.
-
-```bash
-ctest --test-dir build --output-on-failure
-```
-
 ## Project Layout
 
 ```
-CMakeLists.txt          Top-level build, finds Qt and adds the three layers plus tests
+CMakeLists.txt          Top-level build, finds Qt and adds the three targets
 src/
   core/                 Simulation library (game_core)
     GameConfig.h        Shared tunables: sizes, speeds, timings, scoring
@@ -113,8 +102,6 @@ src/
     MenuButton.qml      Pill button used by the menu
   app/
     main.cpp            Entry point, engine setup, C++/QML bridge
-tests/
-  tst_controller.cpp    Headless QTest coverage of the simulation boundaries
 assets/
   assets.qrc            Sprites and fonts, compiled into the executable
 i18n/

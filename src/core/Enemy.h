@@ -6,8 +6,10 @@
 
 #include "core/GameConfig.h"
 
-class Controller;
-
+//A falling enemy. Unlike Bullet it has no self-destruct path: a run ends the
+//moment an enemy passes the floor line, so one can never outlive the run it
+//belongs to. The controller drops them all through clearEntities() on the next
+//start, and shooting one removes it directly.
 class Enemy: public QObject
 {
     Q_OBJECT
@@ -20,13 +22,10 @@ public:
     //number of enemy*.png variants shipped in assets/
     static constexpr int spriteCount = 5;
 
-    Enemy(Controller* controller, QObject* parent = nullptr);
+    explicit Enemy(QObject* parent = nullptr);
     double x(){return m_x;}
     double y(){return m_y;}
     int sprite() const {return m_sprite;}
-
-    //y past which the enemy has left the screen and cleans itself up
-    void setDespawnY(double value){m_despawnY = value;}
 
     //set from the controller at spawn, so a wave keeps the speed of the level
     //it arrived in even if the player levels up mid-descent
@@ -54,12 +53,10 @@ public slots:
 signals:
     void xChanged();
     void yChanged();
-    void enemyDestroyed(Enemy* enemy);
 private:
     double m_x;
     double m_y;
     double ySpeed;
-    double m_despawnY;
     int m_sprite;
     QTimer eTime;
 

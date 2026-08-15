@@ -81,7 +81,6 @@ public:
 public slots:
     void updateState();
     void deleteBullet(Bullet* bullet);
-    void deleteEnemy(Enemy *enemy);
     void checkCollision();
     void updateMovement();
 
@@ -98,7 +97,6 @@ signals:
     void thrustingChanged();
 
 private:
-    double despawnY() const; //y below which an enemy is fully off screen
     double ceilingY() const; //y above which the ship cannot climb
     bool enemyReachedBottom(); //true once any enemy touches the bottom edge
     bool enemyHitPlayer(); //true once any enemy box overlaps the player box
