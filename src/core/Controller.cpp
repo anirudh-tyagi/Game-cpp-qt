@@ -20,8 +20,23 @@ qint64 cellKey(int cx, int cy){
     return (static_cast<qint64>(cx) << 32) | static_cast<quint32>(cy);
 }
 
-int nextSpawnDelay(){
-    return enemySpawnMinMs + QRandomGenerator::global()->bounded(enemySpawnJitterMs);
+//waves arrive closer together as the level climbs, down to a floor that keeps
+//the screen survivable
+int nextSpawnDelay(int level){
+    const double scale = std::pow(spawnScalePerLevel, level - 1);
+
+    const int minMs = qMax(enemySpawnFloorMs,
+                           static_cast<int>(enemySpawnMinMs * scale));
+    const int jitterMs = qMax(enemySpawnJitterFloorMs,
+                              static_cast<int>(enemySpawnJitterMs * scale));
+
+    return minMs + QRandomGenerator::global()->bounded(jitterMs);
+}
+
+//and they fall faster, up to a cap
+double enemySpeedForLevel(int level){
+    const double speed = enemyYSpeed + ((level - 1) * enemySpeedPerLevel);
+    return qMin(speed, enemyMaxYSpeed);
 }
 }
 
@@ -36,14 +51,81 @@ Controller::Controller(QObject* parent)
     bottomY(0),
     moveDirection(0)
 {
+    //nothing runs until the start menu calls startGame(), the timers are only
+    //wired up here
     connect(&time, &QTimer::timeout, this, &Controller::updateState);
-    time.start(GameConfig::frameIntervalMs); //60fps
+    time.setInterval(GameConfig::frameIntervalMs); //60fps
 
     connect(&move, &QTimer::timeout, this, &Controller::updateMovement);
     move.setInterval(GameConfig::frameIntervalMs); //60fps, started only while a key is held
 
     connect(&startE, &QTimer::timeout, this, &Controller::createEnemies);
-    startE.start(nextSpawnDelay()); //1-3 seconds
+}
+
+void Controller::clearEntities()
+{
+    //same ordering as deleteBullet/deleteEnemy, list first then the objects, so
+    //QML cannot re-read the model while a dying pointer is still in it
+    const QList<Bullet*> bullets = std::move(bulletList);
+    bulletList.clear();
+    emit bulletChanged();
+
+    const QList<Enemy*> enemies = std::move(enemyList);
+    enemyList.clear();
+    emit enemyChanged();
+
+    for(Bullet* bullet : bullets){
+        bullet->freeze();
+        bullet->deleteLater();
+    }
+    for(Enemy* enemy : enemies){
+        enemy->freeze();
+        enemy->deleteLater();
+    }
+}
+
+void Controller::updateLevel()
+{
+    const int level = 1 + static_cast<int>(m_score / GameConfig::pointsPerLevel);
+
+    if(m_level != level){
+        m_level = level;
+        emit levelChanged();
+    }
+}
+
+void Controller::setThrusting(bool value)
+{
+    if(m_thrusting != value){
+        m_thrusting = value;
+        emit thrustingChanged();
+    }
+}
+
+void Controller::startGame()
+{
+    clearEntities();
+
+    //a restart has to undo everything endGame() froze. The score going back to
+    //zero drops the level with it
+    setScore(0);
+    setThrusting(false);
+    ySpeed = 0;
+    moveDirection = 0;
+    m_y = bottomY;
+    emit yChanged();
+    setX(maxX > 0 ? maxX / 2 : m_x); //start centred
+
+    if(m_gameOver){
+        m_gameOver = false;
+        emit gameOverChanged();
+    }
+
+    m_running = true;
+    emit runningChanged();
+
+    time.start();
+    startE.start(nextSpawnDelay(m_level)); //1-3 seconds at level 1
 }
 
 double Controller::despawnY() const
@@ -113,6 +195,7 @@ void Controller::endGame()
     }
 
     m_gameOver = true;
+    m_running = false;
 
     //every entity drives itself off its own timer, so freeze them all and the
     //last frame stays on screen instead of the world carrying on underneath
@@ -120,6 +203,7 @@ void Controller::endGame()
     move.stop();
     startE.stop();
     moveDirection = 0;
+    setThrusting(false);
 
     for(Enemy* enemy : std::as_const(enemyList)){
         enemy->freeze();
@@ -129,11 +213,12 @@ void Controller::endGame()
     }
 
     emit gameOverChanged();
+    emit runningChanged();
 }
 
 void Controller::moveLeft()
 {
-    if(m_gameOver){
+    if(!m_running){
         return;
     }
 
@@ -146,7 +231,7 @@ void Controller::moveLeft()
 }
 
 void Controller::moveRight(){
-    if(m_gameOver){
+    if(!m_running){
         return;
     }
 
@@ -165,7 +250,7 @@ void Controller::stopMovement()
 }
 
 void Controller::applyThrust(){
-    if(m_gameOver){
+    if(!m_running){
         return;
     }
 
@@ -177,7 +262,7 @@ void Controller::applyThrust(){
 
 void Controller::fireBullet()
 {
-    if(m_gameOver){
+    if(!m_running){
         return;
     }
 
@@ -191,11 +276,11 @@ void Controller::fireBullet()
 
 void Controller::createEnemies()
 {
-    if(m_gameOver){
+    if(!m_running){
         return;
     }
 
-    startE.start(nextSpawnDelay());
+    startE.start(nextSpawnDelay(m_level));
 
     //nothing to spawn into until QML has handed us the window size
     if(maxX <= 0){
@@ -206,6 +291,7 @@ void Controller::createEnemies()
     newEnemy->setX(QRandomGenerator::global()->bounded(static_cast<int>(maxX) + 1));
     newEnemy->setY(-GameConfig::enemyHeight);
     newEnemy->setDespawnY(despawnY());
+    newEnemy->setYSpeed(enemySpeedForLevel(m_level));
     enemyList.append(newEnemy);
 
     emit enemyChanged();
@@ -219,6 +305,11 @@ void Controller::updateState(){
     if(m_y > bottomY){
         m_y = bottomY;
     }
+
+    //the plume burns for as long as the ship is still gaining height, a flag on
+    //the key press alone would blink out after a single frame
+    setThrusting(ySpeed < 0);
+
     checkCollision();
     emit yChanged();
 

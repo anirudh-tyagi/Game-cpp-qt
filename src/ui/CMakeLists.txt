@@ -18,7 +18,10 @@ qt_add_qml_module(game_ui
         BulletView.qml
         EnemyView.qml
         Hud.qml
-        GameOverOverlay.qml
+        LevelBanner.qml
+        Starfield.qml
+        MenuOverlay.qml
+        MenuButton.qml
 )
 
 target_link_libraries(game_ui PRIVATE Qt6::Quick)

@@ -21,17 +21,21 @@ The build is split into three targets, one per layer:
 - **`Controller`** — Central game-state owner. Drives the fixed-timestep update loop (`QTimer`, ~60 FPS), tracks player position and physics (gravity, thrust), resolves bullet/enemy collisions through a uniform grid, and manages the lifetime of `Bullet` and `Enemy` instances via `QQmlListProperty`.
 - **`Bullet`** — A fired projectile with independent position updates and a destruction signal consumed by the `Controller` for cleanup.
 - **`Enemy`** — A spawned enemy entity with its own position state, instantiated on a jittered timer interval.
-- **`GameConfig.h`** — Every simulation tunable (entity sizes, speeds, timings, scoring) in one header.
+- **`GameConfig.h`** — Every simulation tunable (entity sizes, speeds, timings, scoring, difficulty ramp) in one header.
+
+The level is derived from the score (`1 + score / pointsPerLevel`) rather than counted alongside it, so the two cannot drift apart. Each level makes enemies fall faster and spawn closer together; both ramps are clamped, and the speed cap also keeps a falling enemy from stepping clean over the player between two frames.
 
 ### Presentation (`src/ui`)
 
 `Main.qml` is the only file that touches the C++ side. It reads the `control` context property and feeds plain values down into view components, so the components below it stay reusable and testable in isolation:
 
 - **`Main.qml`** — Root window, keyboard input forwarding, and all binding to `control`.
-- **`Player.qml` / `BulletView.qml` / `EnemyView.qml`** — Passive views, positioned by their parent.
-- **`Hud.qml`** — Score readout, takes the score as a property.
-- **`GameOverOverlay.qml`** — End-of-run message.
-- **`Theme.qml`** — Singleton holding colors and sizes, so no view hard-codes its own look.
+- **`Player.qml` / `BulletView.qml` / `EnemyView.qml`** — Passive sprite views, positioned by their parent.
+- **`Hud.qml`** — Score and level readout, takes both as properties.
+- **`LevelBanner.qml`** — Transient level-up announcement, shown when the caller calls `announce()`.
+- **`Starfield.qml`** — Decorative night-sky backdrop, seeded once at creation.
+- **`MenuOverlay.qml` / `MenuButton.qml`** — The one page shown before a run and after one ends. It holds no game state; the caller supplies the wording and handles the two signals.
+- **`Theme.qml`** — Singleton holding colors, sizes, fonts, and sprite paths, so no view hard-codes its own look.
 
 This separation keeps simulation state and timing in C++, where memory layout and update cost are predictable, while leaving rendering and input handling declarative in QML.
 
@@ -45,6 +49,8 @@ This separation keeps simulation state and timing in C++, where memory layout an
 | Right Arrow | Move right |
 | Up Arrow | Apply thrust |
 | Space | Fire bullet |
+| Enter | Start / restart, while the menu is up |
+| Escape | Quit, while the menu is up |
 
 ## Requirements
 
@@ -79,14 +85,19 @@ src/
     Enemy.h/.cpp        Enemy entity
   ui/                   QML module "Game01" (game_ui)
     Main.qml            Root window, input, and the only binding to C++
-    Theme.qml           Singleton: colors and sizes
+    Theme.qml           Singleton: colors, sizes, fonts, sprite paths
     Player.qml          Player view
     BulletView.qml      Projectile view delegate
     EnemyView.qml       Enemy view delegate
-    Hud.qml             Score readout
-    GameOverOverlay.qml End-of-run message
+    Hud.qml             Score and level readout
+    LevelBanner.qml     Level-up announcement
+    Starfield.qml       Night-sky backdrop
+    MenuOverlay.qml     Start / game-over page
+    MenuButton.qml      Pill button used by the menu
   app/
     main.cpp            Entry point, engine setup, C++/QML bridge
+assets/
+  assets.qrc            Sprites and fonts, compiled into the executable
 i18n/
   Game01_en_IN.ts       Translation source, compiled into the binary at :/i18n
 ```

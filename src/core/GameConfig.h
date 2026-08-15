@@ -33,6 +33,20 @@ constexpr double cellSize = 64.0;
 //scoring
 constexpr double pointsPerKill = 10.0;
 
+//levels. The level is derived from the score rather than counted separately,
+//so the two can never drift apart
+constexpr double pointsPerLevel = 100.0; //10 kills per level
+
+//difficulty ramp, two knobs: enemies fall faster and arrive closer together.
+//both are clamped, an uncapped ramp turns unplayable within a few levels
+constexpr double enemySpeedPerLevel = 0.35;
+//an enemy moves this far per enemyFrameIntervalMs tick, so the cap also keeps a
+//falling enemy from stepping clean over the player box between two frames
+constexpr double enemyMaxYSpeed = 6.0;
+constexpr double spawnScalePerLevel = 0.85; //compounding, so ~15% tighter each level
+constexpr int enemySpawnFloorMs = 320;
+constexpr int enemySpawnJitterFloorMs = 400;
+
 } // namespace GameConfig
 
 #endif // GAMECONFIG_H

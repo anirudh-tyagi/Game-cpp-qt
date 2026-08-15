@@ -1,8 +1,11 @@
 import QtQuick
 
 //Delegate for one Bullet in the controller's bullet list.
-Rectangle {
+Image {
     width: Theme.bulletWidth
     height: Theme.bulletHeight
-    color: Theme.bulletColor
+    source: Theme.bulletSource
+    fillMode: Image.PreserveAspectFit
+    sourceSize.width: Theme.bulletWidth * 3
+    smooth: true
 }

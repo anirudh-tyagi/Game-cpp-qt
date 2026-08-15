@@ -16,7 +16,13 @@ class Controller: public QObject
     Q_PROPERTY(QQmlListProperty<Bullet> bullets READ bullets NOTIFY bulletChanged)
     Q_PROPERTY(QQmlListProperty<Enemy> enemies READ enemies NOTIFY enemyChanged)
     Q_PROPERTY(double score READ score WRITE setScore NOTIFY scoreChanged)
+    //derived from the score, never set directly. Starts at 1
+    Q_PROPERTY(int level READ level NOTIFY levelChanged)
     Q_PROPERTY(bool gameOver READ gameOver NOTIFY gameOverChanged)
+    //false before the first start and once a run has ended, the menu keys off it
+    Q_PROPERTY(bool running READ running NOTIFY runningChanged)
+    //true while the ship is still climbing, the exhaust plume keys off it
+    Q_PROPERTY(bool thrusting READ thrusting NOTIFY thrustingChanged)
 
 public:
     Controller(QObject* parent = nullptr);
@@ -36,9 +42,14 @@ public:
             emit yChanged();
         }
     }
-    void setScore(double value){if(m_score != value){m_score=value; emit scoreChanged();}}
+    //the only way the score moves, so hanging the level off it here is what
+    //keeps the two in step, including on a reset back to zero
+    void setScore(double value){if(m_score != value){m_score=value; emit scoreChanged(); updateLevel();}}
     double score(){return m_score;}
+    int level() const {return m_level;}
     bool gameOver() const {return m_gameOver;}
+    bool running() const {return m_running;}
+    bool thrusting() const {return m_thrusting;}
 
     //this helps us expose our C++ obj or class to qmls
     QQmlListProperty <Bullet> bullets()
@@ -52,6 +63,8 @@ public:
 
     //called from QML
     Q_INVOKABLE void setBoundaries(double width, double height);
+    //starts a fresh run, also used by the restart button after a game over
+    Q_INVOKABLE void startGame();
     Q_INVOKABLE void moveLeft();
     Q_INVOKABLE void moveRight();
     Q_INVOKABLE void stopMovement();
@@ -73,13 +86,19 @@ signals:
     void enemyChanged();
     void bulletDestroyed();
     void scoreChanged();
+    void levelChanged();
     void gameOverChanged();
+    void runningChanged();
+    void thrustingChanged();
 
 private:
     double despawnY() const; //y below which an enemy is fully off screen
     bool enemyReachedBottom(); //true once any enemy touches the bottom edge
     bool enemyHitPlayer(); //true once any enemy box overlaps the player box
     void endGame(); //freeze everything and flag the game as over
+    void clearEntities(); //drop every bullet and enemy left over from a run
+    void setThrusting(bool value); //only emits when the plume actually changes
+    void updateLevel(); //recompute the level from the score
 
     double m_x; //current position of rect on x direction
     double m_y; //current position of rect on y dirsction
@@ -95,7 +114,10 @@ private:
     int moveDirection;
     QTimer move;
     double m_score = 0;
+    int m_level = 1;
     bool m_gameOver = false;
+    bool m_running = false;
+    bool m_thrusting = false;
 };
 
 #endif // CONTROLLER_H
