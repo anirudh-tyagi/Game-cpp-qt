@@ -46,6 +46,58 @@ This separation keeps simulation state and timing in C++, where memory layout an
 
 Keyboard input filters auto-repeat, so movement and fire rate come from the controller's own timer rather than from the reader's keyboard settings, and it tracks both arrows so releasing one while the other is held hands over instead of stopping.
 
+## Benchmarks
+
+`bench/` measures the collision broad phase in `Controller::checkCollision()` against an
+exhaustive sweep that tests every bullet against every enemy. Both passes read entity sizes
+and the cell size out of `GameConfig.h`, so retuning the game retunes the benchmark with it.
+
+`collision_verify` runs both over 2,000 randomized scenes and compares the full set of
+overlapping pairs. Two boxes that overlap must share at least one cell, so the grid cannot
+miss a pair, and the check confirms it: 2,000/2,000 identical, across 18,585 overlapping
+pairs. The per-frame dedup is switched off for the comparison — with it on, the two passes
+visit enemies in a different order, so a bullet can claim a different but equally valid
+enemy and the counts drift apart without either side being wrong.
+
+`collision_bench`, release build, Apple M-series, 1280x720 field, entities placed uniformly:
+
+| bullets x enemies | grid | sweep | speedup | AABB tests, grid vs sweep | |
+|---|---|---|---|---|---|
+| 10 x 12 | 1.9 us | 0.3 us | 0.2x | 4 vs 107 (27x fewer) | typical live play |
+| 15 x 25 | 4.2 us | 0.8 us | 0.2x | 7 vs 322 (46x) | |
+| 30 x 60 | 9.8 us | 3.3 us | 0.3x | 39 vs 1,378 (35x) | |
+| 50 x 100 | 16.8 us | 8.5 us | 0.5x | 72 vs 3,211 (45x) | |
+| 100 x 250 | 42.0 us | 34.9 us | 0.8x | 247 vs 11,192 (45x) | sweep still ahead |
+| 200 x 500 | 77.5 us | 148.4 us | 1.9x | 653 vs 32,025 (49x) | grid pulls ahead |
+| 500 x 1000 | 156.9 us | 972.8 us | 6.2x | 1,704 vs 111,046 (65x) | |
+| 1000 x 2000 | 367.0 us | 2,540.9 us | 6.8x | 3,497 vs 250,613 (72x) | stress |
+
+The grid cuts AABB tests by 27-72x at every size, because a bullet only ever tests the
+enemies bucketed into the cells its own box touches. Wall-clock time is a different story:
+below roughly 150 bullets against 350 enemies the sweep is *faster*, because building a
+`QHash` every frame costs more in allocation and pointer chasing than the hundred-odd
+tests it saves, and a flat `QList` walk predicts well.
+
+Skyward never gets near that crossover. The spawn floor and the descent-speed cap put
+about a dozen enemies on screen at once, where the pass costs ~2 us of a 16 ms frame
+budget — about 0.01%, and slower than the sweep would have been. The grid is kept because
+it holds its shape as entity counts grow, not because it pays for itself at this size;
+`enemyHitPlayer()` deliberately uses a plain sweep instead, since one player box against a
+dozen enemies is exactly the case the grid loses.
+
+The benchmark times the algorithm alone. A real frame also pays for `QObject` construction,
+signal emission and the QML delegate rebuild, none of which appear here.
+
+To build and run:
+
+```bash
+cmake -S . -B build -DCMAKE_PREFIX_PATH=/path/to/Qt/6.x.y/<platform> \
+    -DCMAKE_BUILD_TYPE=Release -DSKYWARD_BUILD_BENCH=ON
+cmake --build build --target collision_bench collision_verify
+./build/bench/collision_verify   # exits non-zero on a mismatch, also runs under ctest
+./build/bench/collision_bench
+```
+
 ## Controls
 
 | Key | Action |
@@ -82,6 +134,7 @@ cmake --build build --target all_qmllint
 
 ```
 CMakeLists.txt          Top-level build, finds Qt and adds the three targets
+                        plus bench/ behind the SKYWARD_BUILD_BENCH option
 src/
   core/                 Simulation library (game_core)
     GameConfig.h        Shared tunables: sizes, speeds, timings, scoring
@@ -102,6 +155,9 @@ src/
     MenuButton.qml      Pill button used by the menu
   app/
     main.cpp            Entry point, engine setup, C++/QML bridge
+bench/                  Collision benchmarks, built with -DSKYWARD_BUILD_BENCH=ON
+  CollisionBench.cpp    Uniform grid vs exhaustive sweep, timings and test counts
+  CollisionVerify.cpp   Checks the grid finds the same pairs as the sweep
 assets/
   assets.qrc            Sprites and fonts, compiled into the executable
 i18n/
