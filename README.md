@@ -8,6 +8,12 @@ Skyward is a small unhurried shooter. You fly a rocket along the bottom of a nig
 
 The project is structured to separate simulation logic (C++) from presentation (QML), using Qt's property and signal/slot system as the binding layer between the two.
 
+## Showcase
+
+| Early prototype | Current build |
+|---|---|
+| ![Early prototype of Skyward](docs/media/starting.gif) | ![Current build of Skyward](docs/media/final.gif) |
+
 ## Architecture
 
 The build is split into three targets, one per layer:
