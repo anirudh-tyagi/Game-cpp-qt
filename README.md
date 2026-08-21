@@ -10,16 +10,13 @@ The project is structured to separate simulation logic (C++) from presentation (
 
 ## Showcase
 
-<table width="100%">
-<tr>
-<th align="center">Early prototype</th>
-<th align="center">Current build</th>
-</tr>
-<tr>
-<td width="50%"><img src="docs/media/starting.gif" width="100%" alt="Early prototype of Skyward"></td>
-<td width="50%"><img src="docs/media/final.gif" width="100%" alt="Current build of Skyward"></td>
-</tr>
-</table>
+**Current build**
+
+<img src="docs/media/final-n.gif" width="100%" alt="Current build of Skyward">
+
+**Early prototype**
+
+<img src="docs/media/start.gif" width="100%" alt="Early prototype of Skyward">
 
 ## Architecture
 
